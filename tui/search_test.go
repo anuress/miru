@@ -3,7 +3,7 @@ package tui_test
 import (
 	"testing"
 
-	"github.com/nurliman/miru/tui"
+	"github.com/anuress/miru/tui"
 )
 
 func TestSearch_FindMatches(t *testing.T) {

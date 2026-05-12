@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nurliman/miru/protocol"
+	"github.com/anuress/miru/protocol"
 )
 
 func TestReadMessage_Request(t *testing.T) {

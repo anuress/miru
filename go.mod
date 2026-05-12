@@ -1,4 +1,4 @@
-module github.com/nurliman/miru
+module github.com/anuress/miru
 
 go 1.24.13
 

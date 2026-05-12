@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nurliman/miru/model"
+	"github.com/anuress/miru/model"
 )
 
 type Filter struct {

@@ -3,8 +3,8 @@ package tui_test
 import (
 	"testing"
 
-	"github.com/nurliman/miru/model"
-	"github.com/nurliman/miru/tui"
+	"github.com/anuress/miru/model"
+	"github.com/anuress/miru/tui"
 )
 
 func req(method, url string, status int) model.Request {

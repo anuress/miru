@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nurliman/miru/model"
-	"github.com/nurliman/miru/tui"
+	"github.com/anuress/miru/model"
+	"github.com/anuress/miru/tui"
 )
 
 func TestGenerateCurl_GET(t *testing.T) {

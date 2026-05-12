@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nurliman/miru/model"
+	"github.com/anuress/miru/model"
 )
 
 func GenerateCurl(r model.Request) string {

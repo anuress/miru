@@ -3,7 +3,7 @@ package adb_test
 import (
 	"testing"
 
-	"github.com/nurliman/miru/adb"
+	"github.com/anuress/miru/adb"
 )
 
 func TestParseDevices_MultipleDevices(t *testing.T) {
