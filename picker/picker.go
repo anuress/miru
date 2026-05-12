@@ -23,15 +23,15 @@ func PickDevice(devices []adb.Device) string {
 	cursor := 0
 	redraw := func() {
 		fmt.Print(clrScreen)
-		fmt.Print("◆ miru — select device\n\n")
+		fmt.Print("◆ miru — select device\r\n\r\n")
 		for i, d := range devices {
 			if i == cursor {
-				fmt.Printf("  %s▶ %-40s%s\n", styleSel, d.Serial, styleReset)
+				fmt.Printf("  %s▶ %-40s%s\r\n", styleSel, d.Serial, styleReset)
 			} else {
-				fmt.Printf("    %-40s\n", d.Serial)
+				fmt.Printf("    %-40s\r\n", d.Serial)
 			}
 		}
-		fmt.Println("\n↑↓ / j k  navigate · enter  select · q  quit")
+		fmt.Print("\r\n↑↓ / j k  navigate · enter  select · q  quit\r\n")
 	}
 
 	if err := setRaw(true); err != nil {
@@ -85,16 +85,16 @@ func PickProcess(procs []adb.Process, device string) string {
 
 	redraw := func(vis []adb.Process) {
 		fmt.Print(clrScreen)
-		fmt.Printf("◆ miru — select process  [%s]\n\n", device)
-		fmt.Printf("  Filter: %s_\n  %d processes\n\n", filter, len(vis))
+		fmt.Printf("◆ miru — select process  [%s]\r\n\r\n", device)
+		fmt.Printf("  Filter: %s_\r\n  %d processes\r\n\r\n", filter, len(vis))
 		for i, p := range vis {
 			if i == cursor {
-				fmt.Printf("  %s▶ %-50s (PID %-6s)%s\n", styleSel, p.Package, p.PID, styleReset)
+				fmt.Printf("  %s▶ %-50s (PID %-6s)%s\r\n", styleSel, p.Package, p.PID, styleReset)
 			} else {
-				fmt.Printf("    %-50s (PID %-6s)\n", p.Package, p.PID)
+				fmt.Printf("    %-50s (PID %-6s)\r\n", p.Package, p.PID)
 			}
 		}
-		fmt.Println("\n↑↓ / j k  navigate · type  filter · backspace  erase · enter  select · q  quit")
+		fmt.Print("\r\n↑↓ / j k  navigate · type  filter · backspace  erase · enter  select · q  quit\r\n")
 	}
 
 	if err := setRaw(true); err != nil {
