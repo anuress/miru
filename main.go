@@ -33,18 +33,10 @@ func main() {
 		if len(devices) == 1 {
 			serial = devices[0].Serial
 		} else {
-			m := picker.NewDeviceModel(devices)
-			p := tea.NewProgram(m, tea.WithAltScreen())
-			result, err := p.Run()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-			dm := result.(picker.DeviceModel)
-			if dm.Chosen() == nil {
+			serial = picker.PickDevice(devices)
+			if serial == "" {
 				os.Exit(0)
 			}
-			serial = dm.Chosen().Serial
 		}
 	}
 
@@ -55,18 +47,10 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		m := picker.NewProcessModel(procs)
-		p := tea.NewProgram(m, tea.WithAltScreen())
-		result, err := p.Run()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		pm := result.(picker.ProcessModel)
-		if pm.Chosen() == nil {
+		pkg = picker.PickProcess(procs, serial)
+		if pkg == "" {
 			os.Exit(0)
 		}
-		pkg = pm.Chosen().Package
 	}
 
 	if err := adb.Forward(serial, *portFlag); err != nil {
