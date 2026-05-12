@@ -5,14 +5,14 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
 )
 
-var (
-	styleSelected = lipgloss.NewStyle().Reverse(true).Bold(true)
-	styleNormal   = lipgloss.NewStyle()
+const (
+	ansiReset   = "\033[0m"
+	ansiReverse = "\033[7m"
+	ansiBold    = "\033[1m"
 )
 
 type ProcessModel struct {
@@ -85,9 +85,7 @@ func (m ProcessModel) View() string {
 	for i, p := range m.visible {
 		line := fmt.Sprintf("  %s  (PID %s)", p.Package, p.PID)
 		if i == m.cursor {
-			line = styleSelected.Render(fmt.Sprintf("▶ %s  (PID %s)", p.Package, p.PID))
-		} else {
-			line = styleNormal.Render(line)
+			line = ansiReverse + ansiBold + fmt.Sprintf("▶ %s  (PID %s)", p.Package, p.PID) + ansiReset
 		}
 		s += line + "\n"
 	}

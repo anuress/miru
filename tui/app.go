@@ -33,6 +33,7 @@ type AppModel struct {
 	filterInput string
 	focus       focusPane
 	conn        net.Conn
+	msgCh       <-chan protocol.Message
 	device      string
 	process     string
 	port        int
@@ -46,6 +47,7 @@ func NewAppModel(conn net.Conn, device, process string, port int) AppModel {
 		list:      NewListModel(),
 		detail:    NewDetailModel(),
 		conn:      conn,
+		msgCh:     protocol.NewStreamReader(conn),
 		device:    device,
 		process:   process,
 		port:      port,
@@ -69,8 +71,7 @@ func (m AppModel) Init() tea.Cmd {
 
 func (m AppModel) listenCmd() tea.Cmd {
 	return func() tea.Msg {
-		ch := protocol.NewStreamReader(m.conn)
-		msg, ok := <-ch
+		msg, ok := <-m.msgCh
 		if !ok {
 			return connLost{}
 		}
@@ -95,6 +96,7 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case connRestored:
 		m.conn = msg.conn
+		m.msgCh = protocol.NewStreamReader(msg.conn)
 		m.connected = true
 		return m, m.listenCmd()
 

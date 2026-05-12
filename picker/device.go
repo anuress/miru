@@ -4,15 +4,10 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
 )
 
-var (
-	deviceStyleSelected = lipgloss.NewStyle().Reverse(true).Bold(true)
-	deviceStyleNormal   = lipgloss.NewStyle()
-)
 
 type DeviceModel struct {
 	devices []adb.Device
@@ -56,11 +51,11 @@ func (m DeviceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m DeviceModel) View() string {
 	s := "◆ miru — select device\n\n"
 	for i, d := range m.devices {
+		line := fmt.Sprintf("  %s", d.Serial)
 		if i == m.cursor {
-			s += deviceStyleSelected.Render(fmt.Sprintf("▶ %s", d.Serial)) + "\n"
-		} else {
-			s += deviceStyleNormal.Render(fmt.Sprintf("  %s", d.Serial)) + "\n"
+			line = ansiReverse + ansiBold + fmt.Sprintf("▶ %s", d.Serial) + ansiReset
 		}
+		s += line + "\n"
 	}
 	s += "\n↑↓ navigate · ↵ select · q quit"
 	return s
