@@ -135,6 +135,25 @@ func (m DetailModel) View() string {
 		content = boundWidth(content, m.width-1)
 	}
 
+	// Clip to pane height: tabBar(1) + optional searchBar(1) = 1-2 lines overhead
+	overhead := 1
+	if m.searching || m.search.Query != "" {
+		overhead = 2
+	}
+	availH := m.height - overhead
+	if availH > 0 {
+		lines := strings.Split(content, "\n")
+		start := m.scrollY
+		if start >= len(lines) {
+			start = max(0, len(lines)-1)
+		}
+		end := start + availH
+		if end > len(lines) {
+			end = len(lines)
+		}
+		content = strings.Join(lines[start:end], "\n")
+	}
+
 	if m.searching || m.search.Query != "" {
 		searchBar := fmt.Sprintf("/ %s_   %s   n/N: next/prev · esc: dismiss", m.searchInput, m.matchInfo())
 		return tabBar + "\n" + content + "\n" + StyleStatusBar.Render(searchBar)
@@ -236,6 +255,13 @@ func highlightMatches(text string, s Search, currentMatch int) string {
 }
 
 var StyleGray = lipgloss.NewStyle().Foreground(ColorGray)
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
 
 // boundWidth truncates each line in s to at most maxW visible characters,
 // stripping ANSI codes when measuring width.

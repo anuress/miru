@@ -100,9 +100,9 @@ func (m ListModel) View() string {
 	gray := lipgloss.NewStyle().Foreground(ColorGray)
 	header := gray.Render(fmt.Sprintf("%-8s %-*s %-6s %s", "METHOD", urlW, "URL", "STATUS", "TIME"))
 
-	var rows []string
-	rows = append(rows, header)
-	for i, r := range m.visible() {
+	visible := m.visible()
+	var allRows []string
+	for i, r := range visible {
 		method := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8s", r.Method))
 		url := truncate(r.URL, urlW)
 		status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
@@ -111,9 +111,24 @@ func (m ListModel) View() string {
 		if i == m.cursor {
 			row = StyleSelected.Render(row)
 		}
-		rows = append(rows, row)
+		allRows = append(allRows, row)
 	}
-	return strings.Join(rows, "\n")
+
+	// Clip to available height (subtract 1 for header)
+	availH := m.height - 1
+	if availH <= 0 || len(allRows) <= availH {
+		return strings.Join(append([]string{header}, allRows...), "\n")
+	}
+	// Keep cursor visible: scroll offset so cursor is within the window
+	offset := m.cursor - availH + 1
+	if offset < 0 {
+		offset = 0
+	}
+	end := offset + availH
+	if end > len(allRows) {
+		end = len(allRows)
+	}
+	return strings.Join(append([]string{header}, allRows[offset:end]...), "\n")
 }
 
 func truncate(s string, n int) string {
