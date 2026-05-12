@@ -2,13 +2,13 @@ package tui
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/anuress/miru/adb"
 	"github.com/anuress/miru/model"
 	"github.com/anuress/miru/protocol"
 )
@@ -22,48 +22,38 @@ const (
 
 type msgReceived struct{ msg protocol.Message }
 type connLost struct{}
-type connRestored struct{ conn net.Conn }
+type connRestored struct{ session *adb.LogcatSession }
 
 type AppModel struct {
-	list        ListModel
-	detail      DetailModel
-	curl        CurlOverlay
-	filter      Filter
-	filterMode  bool
-	filterInput string
-	focus       focusPane
-	conn         net.Conn
+	list         ListModel
+	detail       DetailModel
+	curl         CurlOverlay
+	filter       Filter
+	filterMode   bool
+	filterInput  string
+	focus        focusPane
+	session      *adb.LogcatSession
 	msgCh        <-chan protocol.Message
 	device       string
 	process      string
-	port         int
+	pid          string
 	connected    bool
 	everReceived bool
 	width        int
 	height       int
 }
 
-func NewAppModel(conn net.Conn, device, process string, port int) AppModel {
+func NewAppModel(session *adb.LogcatSession, device, process, pid string) AppModel {
 	return AppModel{
 		list:      NewListModel(),
 		detail:    NewDetailModel(),
-		conn:      conn,
-		msgCh:     protocol.NewStreamReader(conn),
+		session:   session,
+		msgCh:     protocol.NewStreamReader(session),
 		device:    device,
 		process:   process,
-		port:      port,
+		pid:       pid,
 		connected: true,
 	}
-}
-
-func (m AppModel) reconnectCmd() tea.Cmd {
-	return tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
-		conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", m.port))
-		if err != nil {
-			return connLost{}
-		}
-		return connRestored{conn: conn}
-	})
 }
 
 func (m AppModel) Init() tea.Cmd {
@@ -80,6 +70,16 @@ func (m AppModel) listenCmd() tea.Cmd {
 	}
 }
 
+func (m AppModel) reconnectCmd() tea.Cmd {
+	return tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+		session, err := adb.StartLogcat(m.device, m.pid)
+		if err != nil {
+			return connLost{}
+		}
+		return connRestored{session: session}
+	})
+}
+
 func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -94,12 +94,14 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case connLost:
 		m.connected = false
-		m.conn.Close()
+		if m.session != nil {
+			m.session.Stop()
+		}
 		return m, m.reconnectCmd()
 
 	case connRestored:
-		m.conn = msg.conn
-		m.msgCh = protocol.NewStreamReader(msg.conn)
+		m.session = msg.session
+		m.msgCh = protocol.NewStreamReader(msg.session)
 		m.connected = true
 		return m, m.listenCmd()
 
@@ -132,6 +134,9 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		switch msg.String() {
 		case "q", "ctrl+c":
+			if m.session != nil {
+				m.session.Stop()
+			}
 			return m, tea.Quit
 		case "tab":
 			if m.focus == focusList {
@@ -162,28 +167,22 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *AppModel) applyMessage(msg protocol.Message) {
-	switch msg.Type {
-	case "request":
-		r := model.Request{
-			ID:         msg.ID,
-			Method:     msg.Method,
-			URL:        msg.URL,
-			ReqHeaders: msg.Headers,
-			ReqBody:    msg.Body,
-			InFlight:   true,
-		}
-		m.list.AddRequest(r)
-	case "response":
-		for i, r := range m.list.requests {
-			if r.ID == msg.ID {
-				m.list.requests[i].StatusCode = msg.Status
-				m.list.requests[i].RespHeaders = msg.Headers
-				m.list.requests[i].RespBody = msg.Body
-				m.list.requests[i].InFlight = false
-				break
-			}
-		}
+	r := model.Request{
+		ID:          msg.ID,
+		Method:      msg.Method,
+		URL:         msg.URL,
+		StatusCode:  msg.Status,
+		Duration:    time.Duration(msg.Duration) * time.Millisecond,
+		ReqHeaders:  msg.ReqHeaders,
+		ReqBody:     msg.ReqBody,
+		RespHeaders: msg.RespHeaders,
+		RespBody:    msg.RespBody,
+		InFlight:    false,
 	}
+	if msg.Error != "" {
+		r.Error = msg.Error
+	}
+	m.list.AddRequest(r)
 	if sel := m.list.Selected(); sel != nil {
 		m.detail.SetRequest(sel)
 	}

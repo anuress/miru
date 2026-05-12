@@ -16,6 +16,7 @@ type Request struct {
 	RespBodyType string
 	StartedAt    time.Time
 	InFlight     bool
+	Error        string
 }
 
 func (r Request) StatusColour() string {
