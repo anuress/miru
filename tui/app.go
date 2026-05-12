@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -21,6 +22,7 @@ const (
 
 type msgReceived struct{ msg protocol.Message }
 type connLost struct{}
+type connRestored struct{ conn net.Conn }
 
 type AppModel struct {
 	list        ListModel
@@ -33,20 +35,32 @@ type AppModel struct {
 	conn        net.Conn
 	device      string
 	process     string
+	port        int
 	connected   bool
 	width       int
 	height      int
 }
 
-func NewAppModel(conn net.Conn, device, process string) AppModel {
+func NewAppModel(conn net.Conn, device, process string, port int) AppModel {
 	return AppModel{
 		list:      NewListModel(),
 		detail:    NewDetailModel(),
 		conn:      conn,
 		device:    device,
 		process:   process,
+		port:      port,
 		connected: true,
 	}
+}
+
+func (m AppModel) reconnectCmd() tea.Cmd {
+	return tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+		conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", m.port))
+		if err != nil {
+			return connLost{}
+		}
+		return connRestored{conn: conn}
+	})
 }
 
 func (m AppModel) Init() tea.Cmd {
@@ -76,7 +90,13 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case connLost:
 		m.connected = false
-		return m, nil
+		m.conn.Close()
+		return m, m.reconnectCmd()
+
+	case connRestored:
+		m.conn = msg.conn
+		m.connected = true
+		return m, m.listenCmd()
 
 	case tea.KeyMsg:
 		if m.curl.visible {

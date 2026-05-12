@@ -82,7 +82,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	app := tui.NewAppModel(conn, serial, pkg)
+	app := tui.NewAppModel(conn, serial, pkg, *portFlag)
 	p := tea.NewProgram(app, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
