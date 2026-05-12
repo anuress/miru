@@ -24,9 +24,12 @@ func NewListModel() ListModel {
 }
 
 func (m *ListModel) AddRequest(r model.Request) {
-	m.requests = append(m.requests, r)
+	m.requests = append([]model.Request{r}, m.requests...)
 	if m.autoScroll {
-		m.cursor = len(m.requests) - 1
+		m.cursor = 0
+	} else {
+		// shift cursor down to keep the same item selected
+		m.cursor++
 	}
 }
 
@@ -74,15 +77,13 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
-				m.autoScroll = false
 			}
+			m.autoScroll = (m.cursor == 0)
 		case "down", "j":
 			visible := m.visible()
 			if m.cursor < len(visible)-1 {
 				m.cursor++
-			}
-			if m.cursor == len(visible)-1 {
-				m.autoScroll = true
+				m.autoScroll = false
 			}
 		}
 	}
