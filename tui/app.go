@@ -32,14 +32,15 @@ type AppModel struct {
 	filterMode  bool
 	filterInput string
 	focus       focusPane
-	conn        net.Conn
-	msgCh       <-chan protocol.Message
-	device      string
-	process     string
-	port        int
-	connected   bool
-	width       int
-	height      int
+	conn         net.Conn
+	msgCh        <-chan protocol.Message
+	device       string
+	process      string
+	port         int
+	connected    bool
+	everReceived bool
+	width        int
+	height       int
 }
 
 func NewAppModel(conn net.Conn, device, process string, port int) AppModel {
@@ -86,6 +87,8 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case msgReceived:
+		m.everReceived = true
+		m.connected = true
 		m.applyMessage(msg.msg)
 		return m, m.listenCmd()
 
@@ -193,7 +196,11 @@ func (m AppModel) View() string {
 
 	connStatus := lipgloss.NewStyle().Foreground(ColorGreen).Render("● connected")
 	if !m.connected {
-		connStatus = lipgloss.NewStyle().Foreground(ColorRed).Render("● disconnected")
+		if m.everReceived {
+			connStatus = lipgloss.NewStyle().Foreground(ColorRed).Render("● disconnected — retrying…")
+		} else {
+			connStatus = lipgloss.NewStyle().Foreground(ColorOrange).Render("● waiting for interceptor…")
+		}
 	}
 
 	filterStr := ""
