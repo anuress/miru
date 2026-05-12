@@ -5,8 +5,18 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
+)
+
+var (
+	styleSelected = lipgloss.NewStyle().
+			Background(lipgloss.Color("#1c2d3a")).
+			Foreground(lipgloss.Color("#58a6ff")).
+			Bold(true)
+	styleNormal = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#e6edf3"))
 )
 
 type ProcessModel struct {
@@ -77,11 +87,13 @@ func (m ProcessModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m ProcessModel) View() string {
 	s := fmt.Sprintf("◆ miru — select process\n\nFilter: %s_\n%d processes\n\n", m.filter, len(m.visible))
 	for i, p := range m.visible {
-		cursor := "  "
+		line := fmt.Sprintf("  %s  (PID %s)", p.Package, p.PID)
 		if i == m.cursor {
-			cursor = "▶ "
+			line = styleSelected.Render(fmt.Sprintf("▶ %s  (PID %s)", p.Package, p.PID))
+		} else {
+			line = styleNormal.Render(line)
 		}
-		s += fmt.Sprintf("%s%s  (PID %s)\n", cursor, p.Package, p.PID)
+		s += line + "\n"
 	}
 	s += "\n↑↓ navigate · type to filter · ↵ select · q quit"
 	return s

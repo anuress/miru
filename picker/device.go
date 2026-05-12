@@ -4,8 +4,18 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
+)
+
+var (
+	deviceStyleSelected = lipgloss.NewStyle().
+				Background(lipgloss.Color("#1c2d3a")).
+				Foreground(lipgloss.Color("#58a6ff")).
+				Bold(true)
+	deviceStyleNormal = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#e6edf3"))
 )
 
 type DeviceModel struct {
@@ -50,11 +60,11 @@ func (m DeviceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m DeviceModel) View() string {
 	s := "◆ miru — select device\n\n"
 	for i, d := range m.devices {
-		cursor := "  "
 		if i == m.cursor {
-			cursor = "▶ "
+			s += deviceStyleSelected.Render(fmt.Sprintf("▶ %s", d.Serial)) + "\n"
+		} else {
+			s += deviceStyleNormal.Render(fmt.Sprintf("  %s", d.Serial)) + "\n"
 		}
-		s += fmt.Sprintf("%s%s\n", cursor, d.Serial)
 	}
 	s += "\n↑↓ navigate · ↵ select · q quit"
 	return s
