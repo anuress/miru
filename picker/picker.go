@@ -22,9 +22,24 @@ const (
 func PickDevice(devices []adb.Device) string {
 	cursor := 0
 	redraw := func() {
+		h := termHeight()
+		availH := h - 5 // header=3 lines, footer=2 lines
+		if availH < 1 {
+			availH = 1
+		}
+		offset := 0
+		if cursor >= availH {
+			offset = cursor - availH + 1
+		}
+		end := offset + availH
+		if end > len(devices) {
+			end = len(devices)
+		}
+
 		fmt.Print(clrScreen)
 		fmt.Print("◆ miru — select device\r\n\r\n")
-		for i, d := range devices {
+		for i := offset; i < end; i++ {
+			d := devices[i]
 			if i == cursor {
 				fmt.Printf("  %s▶ %-40s%s\r\n", styleSel, d.Serial, styleReset)
 			} else {
@@ -84,10 +99,28 @@ func PickProcess(procs []adb.Process, device string) string {
 	}
 
 	redraw := func(vis []adb.Process) {
+		h := termHeight()
+		// header=4 lines, footer=2 lines → available for list rows
+		availH := h - 6
+		if availH < 1 {
+			availH = 1
+		}
+
+		// scroll offset: keep cursor within the visible window
+		offset := 0
+		if cursor >= availH {
+			offset = cursor - availH + 1
+		}
+		end := offset + availH
+		if end > len(vis) {
+			end = len(vis)
+		}
+
 		fmt.Print(clrScreen)
 		fmt.Printf("◆ miru — select process  [%s]\r\n\r\n", device)
 		fmt.Printf("  Filter: %s_\r\n  %d processes\r\n\r\n", filter, len(vis))
-		for i, p := range vis {
+		for i := offset; i < end; i++ {
+			p := vis[i]
 			if i == cursor {
 				fmt.Printf("  %s▶ %-50s (PID %-6s)%s\r\n", styleSel, p.Package, p.PID, styleReset)
 			} else {
