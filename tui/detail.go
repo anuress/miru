@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -193,7 +195,22 @@ func renderBody(body, contentType string) string {
 	if contentType != "" {
 		label = StyleGray.Render(contentType) + "\n"
 	}
-	return label + body
+	return label + prettyBody(body)
+}
+
+func prettyBody(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) == 0 {
+		return s
+	}
+	// Try JSON pretty-print
+	if (s[0] == '{' || s[0] == '[') {
+		var buf bytes.Buffer
+		if err := json.Indent(&buf, []byte(s), "", "  "); err == nil {
+			return buf.String()
+		}
+	}
+	return s
 }
 
 func highlightMatches(text string, s Search, currentMatch int) string {

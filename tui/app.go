@@ -221,18 +221,20 @@ func (m AppModel) View() string {
 
 	listW := m.width * 45 / 100
 	detailW := m.width - listW - 1
+	paneH := m.height - 2 // top bar + status bar
 
 	listView := m.list.View()
 	detailView := m.detail.View()
 
 	divider := lipgloss.NewStyle().
 		Foreground(ColorBorder).
+		Height(paneH).
 		Render("│")
 
 	split := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(listW).MaxWidth(listW).Render(listView),
+		lipgloss.NewStyle().Width(listW).Height(paneH).MaxWidth(listW).Render(listView),
 		divider,
-		lipgloss.NewStyle().Width(detailW).MaxWidth(detailW).Render(detailView),
+		lipgloss.NewStyle().Width(detailW).Height(paneH).MaxWidth(detailW).Render(detailView),
 	)
 
 	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))
