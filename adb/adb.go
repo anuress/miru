@@ -2,13 +2,13 @@ package adb
 
 import (
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 )
 
 type Device struct {
 	Serial string
-	Info   string
 }
 
 type Process struct {
@@ -60,16 +60,39 @@ func Processes(serial string) ([]Process, error) {
 	return ParseProcesses(string(out)), nil
 }
 
-func Forward(serial string, port int) error {
-	arg := fmt.Sprintf("tcp:%d", port)
-	_, err := exec.Command("adb", "-s", serial, "forward", arg, arg).Output()
-	if err != nil {
-		return fmt.Errorf("adb forward failed: %w", err)
-	}
-	return nil
+// LogcatSession wraps an adb logcat subprocess.
+type LogcatSession struct {
+	cmd *exec.Cmd
+	rc  io.ReadCloser
 }
 
-func RemoveForward(serial string, port int) {
-	arg := fmt.Sprintf("tcp:%d", port)
-	exec.Command("adb", "-s", serial, "forward", "--remove", arg).Run()
+func (s *LogcatSession) Read(p []byte) (int, error) {
+	return s.rc.Read(p)
+}
+
+// Stop kills the adb logcat subprocess.
+func (s *LogcatSession) Stop() {
+	if s.cmd.Process != nil {
+		s.cmd.Process.Kill()
+	}
+	s.rc.Close()
+	s.cmd.Wait()
+}
+
+// StartLogcat starts "adb -s <serial> logcat" filtered by pid if non-empty.
+// Returns a LogcatSession whose Read streams raw logcat output.
+func StartLogcat(serial, pid string) (*LogcatSession, error) {
+	args := []string{"-s", serial, "logcat"}
+	if pid != "" {
+		args = append(args, "--pid="+pid)
+	}
+	cmd := exec.Command("adb", args...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("logcat pipe failed: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start adb logcat: %w", err)
+	}
+	return &LogcatSession{cmd: cmd, rc: stdout}, nil
 }
