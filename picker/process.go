@@ -11,12 +11,8 @@ import (
 )
 
 var (
-	styleSelected = lipgloss.NewStyle().
-			Background(lipgloss.Color("#1c2d3a")).
-			Foreground(lipgloss.Color("#58a6ff")).
-			Bold(true)
-	styleNormal = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#e6edf3"))
+	styleSelected = lipgloss.NewStyle().Reverse(true).Bold(true)
+	styleNormal   = lipgloss.NewStyle()
 )
 
 type ProcessModel struct {

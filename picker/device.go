@@ -10,12 +10,8 @@ import (
 )
 
 var (
-	deviceStyleSelected = lipgloss.NewStyle().
-				Background(lipgloss.Color("#1c2d3a")).
-				Foreground(lipgloss.Color("#58a6ff")).
-				Bold(true)
-	deviceStyleNormal = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#e6edf3"))
+	deviceStyleSelected = lipgloss.NewStyle().Reverse(true).Bold(true)
+	deviceStyleNormal   = lipgloss.NewStyle()
 )
 
 type DeviceModel struct {
