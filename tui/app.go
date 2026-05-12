@@ -152,6 +152,7 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filterMode = true
 		case "c":
 			m.list.Clear()
+			m.detail.SetRequest(nil)
 		case "y":
 			if sel := m.list.Selected(); sel != nil {
 				m.curl.Show(*sel)
