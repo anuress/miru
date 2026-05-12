@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,9 +15,9 @@ import (
 func main() {
 	deviceFlag := flag.String("device", "", "ADB device serial (skip device picker)")
 	processFlag := flag.String("process", "", "App package name (skip process picker)")
-	portFlag := flag.Int("port", 6360, "OkHttp Profiler port")
 	flag.Parse()
 
+	// Resolve device
 	serial := *deviceFlag
 	if serial == "" {
 		devices, err := adb.Devices()
@@ -40,7 +39,9 @@ func main() {
 		}
 	}
 
+	// Resolve process + PID
 	pkg := *processFlag
+	pid := ""
 	if pkg == "" {
 		procs, err := adb.Processes(serial)
 		if err != nil {
@@ -51,22 +52,36 @@ func main() {
 		if pkg == "" {
 			os.Exit(0)
 		}
+		// find the PID for the chosen package
+		for _, p := range procs {
+			if p.Package == pkg {
+				pid = p.PID
+				break
+			}
+		}
+	} else {
+		// --process flag given, look up PID
+		procs, err := adb.Processes(serial)
+		if err == nil {
+			for _, p := range procs {
+				if p.Package == pkg {
+					pid = p.PID
+					break
+				}
+			}
+		}
 	}
 
-	if err := adb.Forward(serial, *portFlag); err != nil {
+	// Start logcat session
+	session, err := adb.StartLogcat(serial, pid)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer adb.RemoveForward(serial, *portFlag)
+	defer session.Stop()
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", *portFlag))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not connect to OkHttp Profiler on port %d — is the interceptor running?\n", *portFlag)
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	app := tui.NewAppModel(conn, serial, pkg, *portFlag)
+	// Launch TUI
+	app := tui.NewAppModel(session, serial, pkg, pid)
 	p := tea.NewProgram(app, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
