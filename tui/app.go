@@ -84,6 +84,10 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
+		listW := m.width * 45 / 100
+		m.list.width = listW
+		m.detail.width = m.width - listW - 1
+		m.detail.height = m.height - 3
 		return m, nil
 
 	case msgReceived:
@@ -214,15 +218,17 @@ func (m AppModel) View() string {
 	listW := m.width * 45 / 100
 	detailW := m.width - listW - 1
 
-	listView := lipgloss.NewStyle().Width(listW).Render(m.list.View())
-	detailView := lipgloss.NewStyle().Width(detailW).Render(m.detail.View())
+	listView := m.list.View()
+	detailView := m.detail.View()
+
+	divider := lipgloss.NewStyle().
+		Foreground(ColorBorder).
+		Render("│")
 
 	split := lipgloss.JoinHorizontal(lipgloss.Top,
-		listView,
-		lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), false, false, false, true).
-			BorderForeground(ColorBorder).
-			Render(detailView),
+		lipgloss.NewStyle().Width(listW).MaxWidth(listW).Render(listView),
+		divider,
+		lipgloss.NewStyle().Width(detailW).MaxWidth(detailW).Render(detailView),
 	)
 
 	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))

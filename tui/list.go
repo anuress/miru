@@ -90,19 +90,24 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 }
 
 func (m ListModel) View() string {
-	header := lipgloss.NewStyle().Foreground(ColorGray).Render(
-		fmt.Sprintf("%-8s %-40s %-8s %s", "METHOD", "URL", "STATUS", "TIME"),
-	)
+	// Fixed columns: method(8) + space(1) + status(6) + space(1) + time(7) + space(1) = 24
+	// URL column gets the rest, minimum 20
+	urlW := 20
+	if m.width > 24+urlW {
+		urlW = m.width - 24
+	}
+
+	gray := lipgloss.NewStyle().Foreground(ColorGray)
+	header := gray.Render(fmt.Sprintf("%-8s %-*s %-6s %s", "METHOD", urlW, "URL", "STATUS", "TIME"))
+
 	var rows []string
 	rows = append(rows, header)
 	for i, r := range m.visible() {
 		method := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8s", r.Method))
-		url := truncate(r.URL, 40)
-		status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8d", r.StatusCode))
-		duration := lipgloss.NewStyle().Foreground(ColorGray).Render(
-			fmt.Sprintf("%dms", r.Duration.Milliseconds()),
-		)
-		row := fmt.Sprintf("%s %-40s %s %s", method, url, status, duration)
+		url := truncate(r.URL, urlW)
+		status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
+		duration := gray.Render(fmt.Sprintf("%dms", r.Duration.Milliseconds()))
+		row := fmt.Sprintf("%s %-*s %s %s", method, urlW, url, status, duration)
 		if i == m.cursor {
 			row = StyleSelected.Render(row)
 		}
