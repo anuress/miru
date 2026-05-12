@@ -103,16 +103,26 @@ func (m ListModel) View() string {
 
 	visible := m.visible()
 	var allRows []string
+	selStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("#1c2d3a")).
+		Foreground(lipgloss.Color("#e6edf3"))
+
 	for i, r := range visible {
-		method := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8s", r.Method))
 		url := truncate(r.URL, urlW)
-		status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
-		duration := gray.Render(fmt.Sprintf("%dms", r.Duration.Milliseconds()))
-		row := fmt.Sprintf("%s %-*s %s %s", method, urlW, url, status, duration)
 		if i == m.cursor {
-			row = StyleSelected.Render(row)
+			// Plain text for selected row so the background isn't broken by inner reset codes
+			plain := fmt.Sprintf("%-8s %-*s %-6s %s",
+				r.Method, urlW, url,
+				statusText(r.StatusCode, r.InFlight),
+				fmt.Sprintf("%dms", r.Duration.Milliseconds()),
+			)
+			allRows = append(allRows, selStyle.Width(m.width).Render(plain))
+		} else {
+			method := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8s", r.Method))
+			status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
+			duration := gray.Render(fmt.Sprintf("%dms", r.Duration.Milliseconds()))
+			allRows = append(allRows, fmt.Sprintf("%s %-*s %s %s", method, urlW, url, status, duration))
 		}
-		allRows = append(allRows, row)
 	}
 
 	// Clip to available height (subtract 1 for header)
@@ -130,6 +140,16 @@ func (m ListModel) View() string {
 		end = len(allRows)
 	}
 	return strings.Join(append([]string{header}, allRows[offset:end]...), "\n")
+}
+
+func statusText(code int, inFlight bool) string {
+	if inFlight {
+		return "..."
+	}
+	if code == 0 {
+		return "???"
+	}
+	return fmt.Sprintf("%d", code)
 }
 
 func truncate(s string, n int) string {
