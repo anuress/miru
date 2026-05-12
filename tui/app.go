@@ -1,0 +1,238 @@
+package tui
+
+import (
+	"fmt"
+	"net"
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/anuress/miru/model"
+	"github.com/anuress/miru/protocol"
+)
+
+type focusPane int
+
+const (
+	focusList focusPane = iota
+	focusDetail
+)
+
+type msgReceived struct{ msg protocol.Message }
+type connLost struct{}
+
+type AppModel struct {
+	list        ListModel
+	detail      DetailModel
+	curl        CurlOverlay
+	filter      Filter
+	filterMode  bool
+	filterInput string
+	focus       focusPane
+	conn        net.Conn
+	device      string
+	process     string
+	connected   bool
+	width       int
+	height      int
+}
+
+func NewAppModel(conn net.Conn, device, process string) AppModel {
+	return AppModel{
+		list:      NewListModel(),
+		detail:    NewDetailModel(),
+		conn:      conn,
+		device:    device,
+		process:   process,
+		connected: true,
+	}
+}
+
+func (m AppModel) Init() tea.Cmd {
+	return m.listenCmd()
+}
+
+func (m AppModel) listenCmd() tea.Cmd {
+	return func() tea.Msg {
+		ch := protocol.NewStreamReader(m.conn)
+		msg, ok := <-ch
+		if !ok {
+			return connLost{}
+		}
+		return msgReceived{msg: msg}
+	}
+}
+
+func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		return m, nil
+
+	case msgReceived:
+		m.applyMessage(msg.msg)
+		return m, m.listenCmd()
+
+	case connLost:
+		m.connected = false
+		return m, nil
+
+	case tea.KeyMsg:
+		if m.curl.visible {
+			m.curl, _ = m.curl.Update(msg)
+			return m, nil
+		}
+		if m.filterMode {
+			switch msg.String() {
+			case "esc":
+				m.filterMode = false
+				m.filterInput = ""
+				m.filter = NewFilter("")
+				m.list.SetFilter(m.filter)
+			case "backspace":
+				if len(m.filterInput) > 0 {
+					m.filterInput = m.filterInput[:len(m.filterInput)-1]
+					m.filter = NewFilter(m.filterInput)
+					m.list.SetFilter(m.filter)
+				}
+			default:
+				if len(msg.String()) == 1 {
+					m.filterInput += msg.String()
+					m.filter = NewFilter(m.filterInput)
+					m.list.SetFilter(m.filter)
+				}
+			}
+			return m, nil
+		}
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		case "tab":
+			if m.focus == focusList {
+				m.focus = focusDetail
+			} else {
+				m.focus = focusList
+			}
+		case "f":
+			m.filterMode = true
+		case "c":
+			m.list.Clear()
+		case "y":
+			if sel := m.list.Selected(); sel != nil {
+				m.curl.Show(*sel)
+			}
+		default:
+			if m.focus == focusList {
+				m.list, _ = m.list.Update(msg)
+				if sel := m.list.Selected(); sel != nil {
+					m.detail.SetRequest(sel)
+				}
+			} else {
+				m.detail, _ = m.detail.Update(msg)
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m *AppModel) applyMessage(msg protocol.Message) {
+	switch msg.Type {
+	case "request":
+		r := model.Request{
+			ID:         msg.ID,
+			Method:     msg.Method,
+			URL:        msg.URL,
+			ReqHeaders: msg.Headers,
+			ReqBody:    msg.Body,
+			InFlight:   true,
+		}
+		m.list.AddRequest(r)
+	case "response":
+		for i, r := range m.list.requests {
+			if r.ID == msg.ID {
+				m.list.requests[i].StatusCode = msg.Status
+				m.list.requests[i].RespHeaders = msg.Headers
+				m.list.requests[i].RespBody = msg.Body
+				m.list.requests[i].InFlight = false
+				break
+			}
+		}
+	}
+	if sel := m.list.Selected(); sel != nil {
+		m.detail.SetRequest(sel)
+	}
+}
+
+func (m AppModel) View() string {
+	if m.width == 0 {
+		return ""
+	}
+
+	connStatus := lipgloss.NewStyle().Foreground(ColorGreen).Render("● connected")
+	if !m.connected {
+		connStatus = lipgloss.NewStyle().Foreground(ColorRed).Render("● disconnected")
+	}
+
+	filterStr := ""
+	if m.filterMode || m.filterInput != "" {
+		filterStr = fmt.Sprintf("[Filter: %s_]  ", m.filterInput)
+	}
+
+	topBar := lipgloss.NewStyle().Background(ColorBgAlt).Width(m.width).Render(
+		fmt.Sprintf(" ◆ miru  %s │ %s  %sf:filter c:clear q:quit", m.process, m.device, filterStr),
+	)
+
+	listW := m.width * 45 / 100
+	detailW := m.width - listW - 1
+
+	listView := lipgloss.NewStyle().Width(listW).Render(m.list.View())
+	detailView := lipgloss.NewStyle().Width(detailW).Render(m.detail.View())
+
+	split := lipgloss.JoinHorizontal(lipgloss.Top,
+		listView,
+		lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder(), false, false, false, true).
+			BorderForeground(ColorBorder).
+			Render(detailView),
+	)
+
+	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))
+	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
+		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:curl │ f:filter │ c:clear  %s", reqCount, connStatus),
+	)
+
+	view := strings.Join([]string{topBar, split, statusBar}, "\n")
+
+	if m.curl.visible {
+		overlay := m.curl.View()
+		overlayW := lipgloss.Width(overlay)
+		overlayH := lipgloss.Height(overlay)
+		top := (m.height - overlayH) / 2
+		left := (m.width - overlayW) / 2
+		return placePseudoOverlay(view, overlay, top, left)
+	}
+	return view
+}
+
+func placePseudoOverlay(base, overlay string, top, left int) string {
+	baseLines := strings.Split(base, "\n")
+	overlayLines := strings.Split(overlay, "\n")
+	for i, ol := range overlayLines {
+		row := top + i
+		if row < 0 || row >= len(baseLines) {
+			continue
+		}
+		line := baseLines[row]
+		runes := []rune(line)
+		olRunes := []rune(ol)
+		for j, r := range olRunes {
+			col := left + j
+			if col >= 0 && col < len(runes) {
+				runes[col] = r
+			}
+		}
+		baseLines[row] = string(runes)
+	}
+	return strings.Join(baseLines, "\n")
+}
