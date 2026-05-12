@@ -82,7 +82,7 @@ func (s *LogcatSession) Stop() {
 // StartLogcat starts "adb -s <serial> logcat" filtered by pid if non-empty.
 // Returns a LogcatSession whose Read streams raw logcat output.
 func StartLogcat(serial, pid string) (*LogcatSession, error) {
-	args := []string{"-s", serial, "logcat"}
+	args := []string{"-s", serial, "logcat", "-T", "0"}
 	if pid != "" {
 		args = append(args, "--pid="+pid)
 	}

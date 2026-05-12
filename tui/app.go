@@ -85,9 +85,11 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		listW := m.width * 45 / 100
+		paneH := m.height - 2
 		m.list.width = listW
+		m.list.height = paneH
 		m.detail.width = m.width - listW - 1
-		m.detail.height = m.height - 3
+		m.detail.height = paneH
 		return m, nil
 
 	case msgReceived:
