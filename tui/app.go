@@ -171,6 +171,10 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *AppModel) applyMessage(msg protocol.Message) {
+	// Skip incomplete messages — can happen from buffered logcat before miru started
+	if msg.Method == "" && msg.URL == "" {
+		return
+	}
 	r := model.Request{
 		ID:          msg.ID,
 		Method:      msg.Method,

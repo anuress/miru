@@ -128,6 +128,11 @@ func (m DetailModel) View() string {
 	tabBar := strings.Join(tabs, "  ")
 	content := m.renderTab()
 
+	// Bound content lines to pane width
+	if m.width > 2 {
+		content = boundWidth(content, m.width-1)
+	}
+
 	if m.searching || m.search.Query != "" {
 		searchBar := fmt.Sprintf("/ %s_   %s   n/N: next/prev · esc: dismiss", m.searchInput, m.matchInfo())
 		return tabBar + "\n" + content + "\n" + StyleStatusBar.Render(searchBar)
@@ -214,3 +219,61 @@ func highlightMatches(text string, s Search, currentMatch int) string {
 }
 
 var StyleGray = lipgloss.NewStyle().Foreground(ColorGray)
+
+// boundWidth truncates each line in s to at most maxW visible characters,
+// stripping ANSI codes when measuring width.
+func boundWidth(s string, maxW int) string {
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		if visibleLen(line) > maxW {
+			lines[i] = truncateLine(line, maxW)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+// visibleLen returns the display width of s ignoring ANSI escape sequences.
+func visibleLen(s string) int {
+	inEsc := false
+	n := 0
+	for _, r := range s {
+		if r == '\033' {
+			inEsc = true
+			continue
+		}
+		if inEsc {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				inEsc = false
+			}
+			continue
+		}
+		n++
+	}
+	return n
+}
+
+// truncateLine truncates s to maxW visible chars, appending "…".
+func truncateLine(s string, maxW int) string {
+	if maxW <= 1 {
+		return "…"
+	}
+	inEsc := false
+	n := 0
+	for i, r := range s {
+		if r == '\033' {
+			inEsc = true
+			continue
+		}
+		if inEsc {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				inEsc = false
+			}
+			continue
+		}
+		if n == maxW-1 {
+			return s[:i] + "…" + "\033[0m"
+		}
+		n++
+	}
+	return s
+}
