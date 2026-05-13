@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -232,9 +233,14 @@ func renderHeaders(headers map[string]string) string {
 	if len(headers) == 0 {
 		return StyleInactiveTab.Render("  (no headers)")
 	}
+	keys := make([]string, 0, len(headers))
+	for k := range headers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	var sb strings.Builder
-	for k, v := range headers {
-		sb.WriteString(StyleHeaderKey.Render(k) + ": " + v + "\n")
+	for _, k := range keys {
+		sb.WriteString(StyleHeaderKey.Render(k) + ": " + headers[k] + "\n")
 	}
 	return sb.String()
 }
