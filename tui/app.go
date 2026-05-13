@@ -157,12 +157,30 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.Clear()
 			m.detail.SetRequest(nil)
 		case "y":
-			if sel := m.list.Selected(); sel != nil {
+			if m.focus == focusDetail {
+				if val, ok := m.detail.ValueAtCursor(); ok {
+					clipboard.Write(clipboard.FmtText, []byte(val))
+					m.curlFlash = "✓ copied"
+					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+						return clearCurlMsg{}
+					})
+				}
+			} else if sel := m.list.Selected(); sel != nil {
 				clipboard.Write(clipboard.FmtText, []byte(GenerateCurl(*sel)))
 				m.curlFlash = "✓ curl copied"
 				return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
 					return clearCurlMsg{}
 				})
+			}
+		case "Y":
+			if m.focus == focusDetail {
+				if line, ok := m.detail.LineAtCursor(); ok {
+					clipboard.Write(clipboard.FmtText, []byte(line))
+					m.curlFlash = "✓ copied"
+					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+						return clearCurlMsg{}
+					})
+				}
 			}
 		default:
 			if m.focus == focusList {

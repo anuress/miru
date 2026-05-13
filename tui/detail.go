@@ -351,6 +351,40 @@ func max(a, b int) int {
 	return b
 }
 
+// ValueAtCursor returns the smart-copy value for the line under the cursor.
+func (m DetailModel) ValueAtCursor() (string, bool) {
+	lines := m.contentLines()
+	if m.cursorLine >= len(lines) {
+		return "", false
+	}
+	raw := stripANSI(lines[m.cursorLine])
+	if isBlockOpener(raw) {
+		block := blockCopy(stripANSILines(lines), m.cursorLine)
+		if block == "" {
+			return "", false
+		}
+		return block, true
+	}
+	val := extractValue(raw)
+	if val == "" {
+		return "", false
+	}
+	return val, true
+}
+
+// LineAtCursor returns the full ANSI-stripped trimmed line under the cursor.
+func (m DetailModel) LineAtCursor() (string, bool) {
+	lines := m.contentLines()
+	if m.cursorLine >= len(lines) {
+		return "", false
+	}
+	raw := strings.TrimSpace(stripANSI(lines[m.cursorLine]))
+	if raw == "" {
+		return "", false
+	}
+	return raw, true
+}
+
 // matchLine returns the 0-based line index containing byte offset pos in text.
 func matchLine(text string, pos int) int {
 	if pos > len(text) {
