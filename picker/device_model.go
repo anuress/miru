@@ -73,7 +73,7 @@ func (m DevicePickerModel) View() string {
 	}
 	innerW := boxW - 2
 
-	title := titleStyle.Render("◆ miru") + grayStyle.Render("  select device")
+	title := "  " + titleStyle.Render("◆ miru") + grayStyle.Render("  select device")
 	sep := grayStyle.Render(strings.Repeat("─", innerW-2))
 
 	var rows []string

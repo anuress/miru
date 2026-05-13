@@ -108,7 +108,7 @@ func (m ProcessPickerModel) View() string {
 
 	// Title bar
 	deviceLabel := grayStyle.Render("  " + m.device)
-	title := titleStyle.Render("◆ miru") + deviceLabel
+	title := "  " + titleStyle.Render("◆ miru") + deviceLabel
 
 	// Filter row
 	count := grayStyle.Render(fmt.Sprintf("%d / %d", len(m.visible), len(m.all)))
