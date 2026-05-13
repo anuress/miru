@@ -246,15 +246,12 @@ func (m AppModel) View() string {
 		filterStr = fmt.Sprintf("  [Filter: %s_]", m.filterInput)
 	}
 
-	pill := lipgloss.NewStyle().
-		Background(ActiveTheme.Surface).
-		Foreground(ColorWhite).
-		PaddingLeft(1).PaddingRight(1)
+	pillBase := lipgloss.NewStyle().Foreground(ActiveTheme.Bg).PaddingLeft(1).PaddingRight(1)
 
 	brand := lipgloss.NewStyle().Foreground(ActiveTheme.Accent).Bold(true).Render("◆ miru")
-	processPill := pill.Render(m.process)
-	devicePill := pill.Render(m.device)
-	countPill := pill.Render(fmt.Sprintf("%d reqs", len(m.list.requests)))
+	processPill := pillBase.Background(ActiveTheme.Blue).Render(m.process)
+	devicePill := pillBase.Background(ActiveTheme.Green).Render(m.device)
+	countPill := pillBase.Background(ActiveTheme.Purple).Render(fmt.Sprintf("%d reqs", len(m.list.requests)))
 	quitHint := lipgloss.NewStyle().Foreground(ColorGray).Render("q:quit")
 
 	topContent := fmt.Sprintf(" %s  %s  %s  %s%s  %s",
