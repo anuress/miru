@@ -205,12 +205,13 @@ func (m DetailModel) View() string {
 			end = len(lines)
 		}
 
-		// Render ▶ marker on the cursor line
+		// Highlight cursor line with reverse-video — no extra chars, no width change
 		visible := make([]string, end-start)
 		copy(visible, lines[start:end])
 		cursorInView := m.cursorLine - start
 		if cursorInView >= 0 && cursorInView < len(visible) {
-			visible[cursorInView] = lipgloss.NewStyle().Foreground(ColorBlue).Render("▶") + " " + visible[cursorInView]
+			plain := stripANSI(visible[cursorInView])
+			visible[cursorInView] = "\033[7m" + plain + "\033[0m"
 		}
 		content = strings.Join(visible, "\n")
 	}
