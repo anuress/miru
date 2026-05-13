@@ -59,15 +59,25 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.searching {
+			lines := m.contentLines()
+			body := strings.Join(lines, "\n")
+			matches := m.search.FindMatches(body)
 			switch msg.String() {
 			case "esc":
 				m.searching = false
 				m.searchInput = ""
 				m.search = NewSearch("")
 				m.currentMatch = 0
-			case "enter":
-				// commit search — close bar, keep highlights, n/N now navigate
-				m.searching = false
+			case "up":
+				if len(matches) > 0 {
+					m.currentMatch = (m.currentMatch - 1 + len(matches)) % len(matches)
+					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
+				}
+			case "down":
+				if len(matches) > 0 {
+					m.currentMatch = (m.currentMatch + 1) % len(matches)
+					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
+				}
 			case "backspace":
 				if len(m.searchInput) > 0 {
 					m.searchInput = m.searchInput[:len(m.searchInput)-1]
@@ -82,29 +92,6 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 				}
 			}
 			return m, nil
-		}
-		// n/N navigate matches when a search query is active (after committing)
-		if m.search.Query != "" {
-			switch msg.String() {
-			case "n":
-				lines := m.contentLines()
-				body := strings.Join(lines, "\n")
-				matches := m.search.FindMatches(body)
-				if len(matches) > 0 {
-					m.currentMatch = (m.currentMatch + 1) % len(matches)
-					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
-				}
-				return m, nil
-			case "N":
-				lines := m.contentLines()
-				body := strings.Join(lines, "\n")
-				matches := m.search.FindMatches(body)
-				if len(matches) > 0 {
-					m.currentMatch = (m.currentMatch - 1 + len(matches)) % len(matches)
-					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
-				}
-				return m, nil
-			}
 		}
 		switch msg.String() {
 		case "left":
@@ -233,7 +220,7 @@ func (m DetailModel) View() string {
 			Foreground(lipgloss.Color("#ffffff")).
 			Width(m.width - 1).
 			PaddingLeft(1)
-		label := searchBg.Render(fmt.Sprintf("/ %s_   %s   ↵ commit · esc: clear",
+		label := searchBg.Render(fmt.Sprintf("/ %s_   %s   ↑↓ navigate · esc clear",
 			m.searchInput, m.matchInfo()))
 		return tabBar + "\n\n" + content + "\n" + label
 	}
