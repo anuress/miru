@@ -220,8 +220,14 @@ func (m DetailModel) View() string {
 	}
 
 	if m.searching || m.search.Query != "" {
-		searchBar := fmt.Sprintf("/ %s_   %s   n/N: next/prev · esc: dismiss", m.searchInput, m.matchInfo())
-		return tabBar + "\n\n" + content + "\n" + StyleStatusBar.Render(searchBar)
+		searchBg := lipgloss.NewStyle().
+			Background(lipgloss.Color("#1f6feb")).
+			Foreground(lipgloss.Color("#ffffff")).
+			Width(m.width - 1).
+			PaddingLeft(1)
+		label := searchBg.Render(fmt.Sprintf("/ %s_   %s   n/N: next/prev · esc: dismiss",
+			m.searchInput, m.matchInfo()))
+		return tabBar + "\n\n" + content + "\n" + label
 	}
 	return tabBar + "\n\n" + content
 }
