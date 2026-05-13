@@ -117,6 +117,11 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// When detail pane is searching, pass all keys directly to it
+		if m.focus == focusDetail && m.detail.searching {
+			m.detail, _ = m.detail.Update(msg)
+			return m, nil
+		}
 		if m.filterMode {
 			switch msg.String() {
 			case "esc":
