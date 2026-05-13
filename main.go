@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -12,10 +14,41 @@ import (
 	"github.com/anuress/miru/tui"
 )
 
+type miruConfig struct {
+	Theme string `json:"theme"`
+}
+
+func loadConfig() miruConfig {
+	home, _ := os.UserHomeDir()
+	path := filepath.Join(home, ".config", "miru", "config.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return miruConfig{Theme: "catppuccin-mocha"}
+	}
+	var c miruConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return miruConfig{Theme: "catppuccin-mocha"}
+	}
+	return c
+}
+
 func main() {
 	deviceFlag := flag.String("device", "", "ADB device serial (skip device picker)")
 	processFlag := flag.String("process", "", "App package name (skip process picker)")
+	themeFlag := flag.String("theme", "", "Color theme: catppuccin-mocha, github-dark (overrides config file)")
 	flag.Parse()
+
+	// Apply theme: flag > config file > default (catppuccin-mocha)
+	cfg := loadConfig()
+	themeName := cfg.Theme
+	if *themeFlag != "" {
+		themeName = *themeFlag
+	}
+	if t, ok := tui.ThemeByName(themeName); ok {
+		tui.ApplyTheme(t)
+	} else {
+		tui.ApplyTheme(tui.CatppuccinMocha)
+	}
 
 	// Resolve device
 	serial := *deviceFlag

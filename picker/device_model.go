@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
+	"github.com/anuress/miru/tui"
 )
 
 type DevicePickerModel struct {
@@ -56,11 +57,12 @@ func (m DevicePickerModel) View() string {
 		return ""
 	}
 
-	blue := lipgloss.Color("#58a6ff")
-	gray := lipgloss.Color("#8b949e")
-	white := lipgloss.Color("#e6edf3")
-	selectedBg := lipgloss.Color("#1c2d3a")
-	bgAlt := lipgloss.Color("#161b22")
+	t := tui.ActiveTheme
+	blue := t.Accent
+	gray := t.Gray
+	white := t.White
+	selectedBg := t.BgAlt
+	bgAlt := t.Bg
 
 	titleStyle := lipgloss.NewStyle().Foreground(blue).Bold(true)
 	grayStyle := lipgloss.NewStyle().Foreground(gray)

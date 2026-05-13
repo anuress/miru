@@ -156,13 +156,13 @@ func (m DetailModel) View() string {
 
 	// Create tab styles inside View() so lipgloss detects the live terminal context
 	activeTab := lipgloss.NewStyle().
-		Background(lipgloss.Color("#1f6feb")).
-		Foreground(lipgloss.Color("#ffffff")).
+		Background(ActiveTheme.Accent).
+		Foreground(ActiveTheme.AccentFg).
 		Bold(true).
 		PaddingLeft(1).
 		PaddingRight(1)
 	inactiveTab := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#8b949e"))
+		Foreground(ColorGray)
 
 	var tabs []string
 	for i, name := range tabNames {
@@ -222,8 +222,8 @@ func (m DetailModel) View() string {
 			content += pad
 		}
 		searchBg := lipgloss.NewStyle().
-			Background(lipgloss.Color("#1f6feb")).
-			Foreground(lipgloss.Color("#ffffff")).
+			Background(ActiveTheme.Accent).
+			Foreground(ActiveTheme.AccentFg).
 			Width(m.width - 1).
 			PaddingLeft(1)
 		label := searchBg.Render(fmt.Sprintf("/ %s_   %s   ↑↓ navigate · esc clear",
@@ -293,7 +293,7 @@ func (m DetailModel) renderTab() string {
 
 func renderHeaders(headers map[string]string) string {
 	if len(headers) == 0 {
-		return StyleInactiveTab.Render("  (no headers)")
+		return StyleInactiveTab().Render("  (no headers)")
 	}
 	keys := make([]string, 0, len(headers))
 	for k := range headers {
@@ -302,18 +302,18 @@ func renderHeaders(headers map[string]string) string {
 	sort.Strings(keys)
 	var sb strings.Builder
 	for _, k := range keys {
-		sb.WriteString(StyleHeaderKey.Render(k) + ": " + headers[k] + "\n")
+		sb.WriteString(StyleHeaderKey().Render(k) + ": " + headers[k] + "\n")
 	}
 	return sb.String()
 }
 
 func renderBody(body, contentType string) string {
 	if body == "" {
-		return StyleInactiveTab.Render("  (no body)")
+		return StyleInactiveTab().Render("  (no body)")
 	}
 	label := ""
 	if contentType != "" {
-		label = StyleGray.Render(contentType) + "\n"
+		label = StyleGrayStyle().Render(contentType) + "\n"
 	}
 	return label + prettyBody(body)
 }
@@ -354,8 +354,6 @@ func highlightMatches(text string, s Search, currentMatch int) string {
 	result.WriteString(text[pos:])
 	return result.String()
 }
-
-var StyleGray = lipgloss.NewStyle().Foreground(ColorGray)
 
 func max(a, b int) int {
 	if a > b {

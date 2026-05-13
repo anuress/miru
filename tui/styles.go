@@ -2,44 +2,32 @@ package tui
 
 import "github.com/charmbracelet/lipgloss"
 
+// Color vars — set via ApplyTheme() before the TUI starts.
 var (
-	ColorGreen  = lipgloss.Color("#3fb950")
-	ColorRed    = lipgloss.Color("#f78166")
-	ColorOrange = lipgloss.Color("#ffa657")
-	ColorBlue   = lipgloss.Color("#58a6ff")
-	ColorGray   = lipgloss.Color("#8b949e")
-	ColorWhite  = lipgloss.Color("#e6edf3")
-	ColorBg     = lipgloss.Color("#0d1117")
-	ColorBgAlt  = lipgloss.Color("#161b22")
-	ColorBorder = lipgloss.Color("#30363d")
-
-	StyleActiveTab = lipgloss.NewStyle().
-			Foreground(ColorBlue).
-			BorderBottom(true).
-			BorderForeground(ColorBlue)
-
-	StyleInactiveTab = lipgloss.NewStyle().
-				Foreground(ColorGray)
-
-	StyleSelected = lipgloss.NewStyle().
-			Background(lipgloss.Color("#1c2d3a")).
-			BorderLeft(true).
-			BorderForeground(ColorBlue)
-
-	StyleHeaderKey = lipgloss.NewStyle().Foreground(lipgloss.Color("#79c0ff"))
-	StyleString    = lipgloss.NewStyle().Foreground(lipgloss.Color("#a5d6ff"))
-	StyleNumber    = lipgloss.NewStyle().Foreground(ColorOrange)
-
-	StyleStatusBar = lipgloss.NewStyle().
-			Background(ColorBgAlt).
-			Foreground(ColorGray)
-
-	StyleOverlay = lipgloss.NewStyle().
-			Background(ColorBgAlt).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ColorBlue).
-			Padding(1, 2)
+	ColorGreen  lipgloss.Color
+	ColorRed    lipgloss.Color
+	ColorOrange lipgloss.Color
+	ColorBlue   lipgloss.Color
+	ColorGray   lipgloss.Color
+	ColorWhite  lipgloss.Color
+	ColorBg     lipgloss.Color
+	ColorBgAlt  lipgloss.Color
+	ColorBorder lipgloss.Color
 )
+
+// Style functions — created at call time so they always use the current colors.
+
+func StyleInactiveTab() lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(ColorGray)
+}
+
+func StyleHeaderKey() lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(ActiveTheme.HeaderKey)
+}
+
+func StyleGrayStyle() lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(ColorGray)
+}
 
 func StatusStyle(code int, inFlight bool) lipgloss.Style {
 	s := lipgloss.NewStyle()
@@ -61,18 +49,18 @@ func MethodStyle(method string) lipgloss.Style {
 	s := lipgloss.NewStyle().Bold(true)
 	switch method {
 	case "GET":
-		return s.Foreground(lipgloss.Color("#58a6ff")) // blue
+		return s.Foreground(ActiveTheme.Blue)
 	case "POST":
-		return s.Foreground(lipgloss.Color("#3fb950")) // green
+		return s.Foreground(ActiveTheme.Green)
 	case "PUT":
-		return s.Foreground(lipgloss.Color("#d2a8ff")) // purple
+		return s.Foreground(ActiveTheme.Purple)
 	case "PATCH":
-		return s.Foreground(lipgloss.Color("#ffa657")) // orange
+		return s.Foreground(ActiveTheme.Orange)
 	case "DELETE":
-		return s.Foreground(lipgloss.Color("#f78166")) // red
+		return s.Foreground(ActiveTheme.Red)
 	case "HEAD":
-		return s.Foreground(lipgloss.Color("#8b949e")) // gray
+		return s.Foreground(ActiveTheme.Gray)
 	default:
-		return s.Foreground(lipgloss.Color("#e6edf3")) // white
+		return s.Foreground(ActiveTheme.White)
 	}
 }

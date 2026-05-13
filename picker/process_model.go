@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anuress/miru/adb"
+	"github.com/anuress/miru/tui"
 )
 
 type ProcessPickerModel struct {
@@ -87,12 +88,13 @@ func (m ProcessPickerModel) View() string {
 		return ""
 	}
 
-	// Styles — created inside View() for proper terminal color detection
-	blue := lipgloss.Color("#58a6ff")
-	gray := lipgloss.Color("#8b949e")
-	white := lipgloss.Color("#e6edf3")
-	selectedBg := lipgloss.Color("#1c2d3a")
-	bgAlt := lipgloss.Color("#161b22")
+	// Styles — use active theme colors
+	t := tui.ActiveTheme
+	blue := t.Accent
+	gray := t.Gray
+	white := t.White
+	selectedBg := t.BgAlt
+	bgAlt := t.Bg
 
 	titleStyle := lipgloss.NewStyle().Foreground(blue).Bold(true)
 	grayStyle := lipgloss.NewStyle().Foreground(gray)
