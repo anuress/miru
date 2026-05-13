@@ -100,12 +100,7 @@ func (m ListModel) View() string {
 
 	gray := lipgloss.NewStyle().Foreground(ColorGray)
 
-	// Raw ANSI for header background — lipgloss background doesn't render without a TTY renderer
-	const headerBg = "\033[48;5;236m" // dark gray bg
-	const headerFg = "\033[1;97m"     // bold bright white
-	const ansiReset = "\033[0m"
-	headerText := fmt.Sprintf("%-8s %-*s %-6s %s", "METHOD", urlW, "URL", "STATUS", "TIME")
-	header := headerBg + headerFg + headerText + ansiReset
+	header := gray.Render(fmt.Sprintf("%-8s %-*s %-6s %s", "METHOD", urlW, "URL", "STATUS", "TIME"))
 	separator := gray.Render(strings.Repeat("─", m.width))
 
 	visible := m.visible()
