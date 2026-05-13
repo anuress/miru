@@ -215,6 +215,12 @@ func (m DetailModel) View() string {
 	}
 
 	if m.searching || m.search.Query != "" {
+		// Pad content to fill availH so search bar sticks to the bottom
+		contentLines := strings.Split(content, "\n")
+		if availH > 0 && len(contentLines) < availH {
+			pad := strings.Repeat("\n", availH-len(contentLines))
+			content += pad
+		}
 		searchBg := lipgloss.NewStyle().
 			Background(lipgloss.Color("#1f6feb")).
 			Foreground(lipgloss.Color("#ffffff")).
