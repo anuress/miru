@@ -243,11 +243,13 @@ func (m AppModel) View() string {
 
 	filterStr := ""
 	if m.filterMode || m.filterInput != "" {
-		filterStr = fmt.Sprintf("[Filter: %s_]  ", m.filterInput)
+		filterStr = fmt.Sprintf("  [Filter: %s_]", m.filterInput)
 	}
 
+	reqCount := fmt.Sprintf("%d reqs", len(m.list.requests))
 	topBar := lipgloss.NewStyle().Background(ColorBgAlt).Width(m.width).Render(
-		fmt.Sprintf(" ◆ miru  %s │ %s  %sf:filter c:clear q:quit", m.process, m.device, filterStr),
+		fmt.Sprintf(" ◆ miru  %s │ %s  %s%s  %s  q:quit",
+			m.process, m.device, reqCount, filterStr, connStatus),
 	)
 
 	paneH := m.height - 2 // top bar + status bar
@@ -285,11 +287,9 @@ func (m AppModel) View() string {
 
 	split := lipgloss.JoinHorizontal(lipgloss.Top, listBox, detailBox)
 
-	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))
-
-	right := connStatus
+	flash := ""
 	if m.curlFlash != "" {
-		right = lipgloss.NewStyle().Foreground(ColorGreen).Render(m.curlFlash)
+		flash = "  " + lipgloss.NewStyle().Foreground(ColorGreen).Render(m.curlFlash)
 	}
 
 	var hints string
@@ -300,12 +300,12 @@ func (m AppModel) View() string {
 		hints = "type to search · ↑↓:matches · esc:clear"
 	case m.focus == focusDetail:
 		hints = "←→:tabs · ↑↓:cursor · y:copy val · Y:copy line · /:search · Tab:list"
-	default: // list focused
+	default:
 		hints = "↑↓:navigate · y:curl · f:filter · c:clear · Tab:detail"
 	}
 
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
-		fmt.Sprintf(" %s │ %s  %s", reqCount, hints, right),
+		fmt.Sprintf(" %s%s", hints, flash),
 	)
 
 	return strings.Join([]string{topBar, split, statusBar}, "\n")
