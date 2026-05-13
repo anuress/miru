@@ -17,9 +17,18 @@ func GenerateCurl(r model.Request) string {
 	for k := range r.ReqHeaders {
 		keys = append(keys, k)
 	}
+	// Headers curl sets automatically — including them causes conflicts or unreadable output
+	skipHeaders := map[string]bool{
+		"content-length":   true,
+		"host":             true,
+		"connection":       true,
+		"transfer-encoding": true,
+		"accept-encoding":  true,
+	}
+
 	sort.Strings(keys)
 	for _, k := range keys {
-		if strings.EqualFold(k, "content-length") {
+		if skipHeaders[strings.ToLower(k)] {
 			continue
 		}
 		fmt.Fprintf(&sb, " \\\n  -H '%s: %s'", k, r.ReqHeaders[k])
