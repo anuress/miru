@@ -34,7 +34,8 @@ type DetailModel struct {
 	currentMatch int
 	width        int
 	height       int
-	scrollY      int
+	cursorLine   int
+	lastKey      string
 }
 
 func NewDetailModel() DetailModel {
@@ -45,7 +46,8 @@ func (m DetailModel) Init() tea.Cmd { return nil }
 
 func (m *DetailModel) SetRequest(r *model.Request) {
 	m.request = r
-	m.scrollY = 0
+	m.cursorLine = 0
+	m.lastKey = ""
 	m.search = NewSearch("")
 	m.searching = false
 	m.searchInput = ""
@@ -69,16 +71,20 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 					m.currentMatch = 0
 				}
 			case "n":
-				body := m.respBody()
+				lines := m.contentLines()
+				body := strings.Join(lines, "\n")
 				matches := m.search.FindMatches(body)
 				if len(matches) > 0 {
 					m.currentMatch = (m.currentMatch + 1) % len(matches)
+					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
 				}
 			case "N":
-				body := m.respBody()
+				lines := m.contentLines()
+				body := strings.Join(lines, "\n")
 				matches := m.search.FindMatches(body)
 				if len(matches) > 0 {
 					m.currentMatch = (m.currentMatch - 1 + len(matches)) % len(matches)
+					m.cursorLine = matchLine(body, matches[m.currentMatch].Start)
 				}
 			default:
 				if len(msg.String()) == 1 {
@@ -93,25 +99,55 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 		case "left":
 			if m.activeTab > 0 {
 				m.activeTab--
-				m.scrollY = 0
+				m.cursorLine = 0
+				m.lastKey = ""
 			}
 		case "right":
 			if m.activeTab < tabCount-1 {
 				m.activeTab++
-				m.scrollY = 0
+				m.cursorLine = 0
+				m.lastKey = ""
 			}
 		case "/":
 			if m.activeTab == TabRespBody {
 				m.searching = true
 			}
 		case "up", "k":
-			if m.scrollY > 0 {
-				m.scrollY--
+			if m.cursorLine > 0 {
+				m.cursorLine--
 			}
+			m.lastKey = ""
 		case "down", "j":
-			if ms := m.maxScroll(); m.scrollY < ms {
-				m.scrollY++
+			if m.cursorLine < m.maxCursor() {
+				m.cursorLine++
 			}
+			m.lastKey = ""
+		case "ctrl+u":
+			half := (m.height - 1) / 2
+			m.cursorLine -= half
+			if m.cursorLine < 0 {
+				m.cursorLine = 0
+			}
+			m.lastKey = ""
+		case "ctrl+d":
+			half := (m.height - 1) / 2
+			m.cursorLine += half
+			if mc := m.maxCursor(); m.cursorLine > mc {
+				m.cursorLine = mc
+			}
+			m.lastKey = ""
+		case "G":
+			m.cursorLine = m.maxCursor()
+			m.lastKey = ""
+		case "g":
+			if m.lastKey == "g" {
+				m.cursorLine = 0
+				m.lastKey = ""
+			} else {
+				m.lastKey = "g"
+			}
+		default:
+			m.lastKey = ""
 		}
 	}
 	return m, nil
@@ -148,7 +184,7 @@ func (m DetailModel) View() string {
 		content = boundWidth(content, m.width-1)
 	}
 
-	// Clip to pane height: tabBar(1) + optional searchBar(1) = 1-2 lines overhead
+	// Clip to pane height with cursor-driven scroll offset
 	overhead := 1
 	if m.searching || m.search.Query != "" {
 		overhead = 2
@@ -157,19 +193,26 @@ func (m DetailModel) View() string {
 	if availH > 0 {
 		content = strings.TrimRight(content, "\n")
 		lines := strings.Split(content, "\n")
-		ms := len(lines) - availH
-		if ms < 0 {
-			ms = 0
+
+		// Derive scroll offset to keep cursorLine visible
+		scrollOffset := 0
+		if m.cursorLine >= availH {
+			scrollOffset = m.cursorLine - availH + 1
 		}
-		start := m.scrollY
-		if start > ms {
-			start = ms
-		}
+		start := scrollOffset
 		end := start + availH
 		if end > len(lines) {
 			end = len(lines)
 		}
-		content = strings.Join(lines[start:end], "\n")
+
+		// Render ▶ marker on the cursor line
+		visible := make([]string, end-start)
+		copy(visible, lines[start:end])
+		cursorInView := m.cursorLine - start
+		if cursorInView >= 0 && cursorInView < len(visible) {
+			visible[cursorInView] = lipgloss.NewStyle().Foreground(ColorBlue).Render("▶") + " " + visible[cursorInView]
+		}
+		content = strings.Join(visible, "\n")
 	}
 
 	if m.searching || m.search.Query != "" {
@@ -179,30 +222,26 @@ func (m DetailModel) View() string {
 	return tabBar + "\n" + content
 }
 
-// maxScroll returns the maximum valid scrollY by mirroring the View() pipeline exactly.
-func (m DetailModel) maxScroll() int {
-	if m.height <= 1 || m.request == nil {
-		return 0
+// contentLines returns the rendered, width-bounded, trimmed lines for the current tab.
+func (m DetailModel) contentLines() []string {
+	if m.request == nil {
+		return nil
 	}
 	content := m.renderTab()
 	if m.width > 2 {
 		content = boundWidth(content, m.width-1)
 	}
-	overhead := 1
-	if m.searching || m.search.Query != "" {
-		overhead = 2
-	}
-	availH := m.height - overhead
-	if availH <= 0 {
-		return 0
-	}
 	content = strings.TrimRight(content, "\n")
-	lines := strings.Split(content, "\n")
-	ms := len(lines) - availH
-	if ms < 0 {
+	return strings.Split(content, "\n")
+}
+
+// maxCursor returns the last valid cursorLine index.
+func (m DetailModel) maxCursor() int {
+	lines := m.contentLines()
+	if len(lines) == 0 {
 		return 0
 	}
-	return ms
+	return len(lines) - 1
 }
 
 func (m DetailModel) respBody() string {
@@ -310,6 +349,14 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// matchLine returns the 0-based line index containing byte offset pos in text.
+func matchLine(text string, pos int) int {
+	if pos > len(text) {
+		pos = len(text)
+	}
+	return strings.Count(text[:pos], "\n")
 }
 
 // boundWidth truncates each line in s to at most maxW visible characters,
