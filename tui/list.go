@@ -116,7 +116,11 @@ func (m ListModel) View() string {
 				statusText(r.StatusCode, r.InFlight),
 				fmt.Sprintf("%dms", r.Duration.Milliseconds()),
 			)
-			allRows = append(allRows, selStyle.Width(m.width).Render(plain))
+			// Pad to full width manually — avoids lipgloss Width() wrapping at the boundary
+			if pad := m.width - len(plain); pad > 0 {
+				plain += strings.Repeat(" ", pad)
+			}
+			allRows = append(allRows, selStyle.Render(plain))
 		} else {
 			method := MethodStyle(r.Method).Render(fmt.Sprintf("%-8s", r.Method))
 			status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
