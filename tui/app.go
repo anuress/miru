@@ -292,8 +292,20 @@ func (m AppModel) View() string {
 		right = lipgloss.NewStyle().Foreground(ColorGreen).Render(m.curlFlash)
 	}
 
+	var hints string
+	switch {
+	case m.filterMode:
+		hints = "URL · m:POST · s:4xx   esc:clear filter"
+	case m.focus == focusDetail && m.detail.searching:
+		hints = "type to search · ↑↓:matches · esc:clear"
+	case m.focus == focusDetail:
+		hints = "←→:tabs · ↑↓:cursor · y:copy val · Y:copy line · /:search · Tab:list"
+	default: // list focused
+		hints = "↑↓:navigate · y:curl · f:filter · c:clear · Tab:detail"
+	}
+
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
-		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:copy │ f:filter │ c:clear  %s", reqCount, right),
+		fmt.Sprintf(" %s │ %s  %s", reqCount, hints, right),
 	)
 
 	return strings.Join([]string{topBar, split, statusBar}, "\n")
