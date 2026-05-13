@@ -84,9 +84,9 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.list.width = (m.width*45/100) - 2
-		m.list.height = m.height - 4 // border top+bottom + topbar + statusbar
-		m.detail.width = m.width - (m.width*45/100) - 2
+		m.list.width = (m.width*45/100) - 3
+		m.list.height = m.height - 4
+		m.detail.width = m.width - (m.width*45/100) - 3
 		m.detail.height = m.height - 4
 		return m, nil
 
@@ -222,10 +222,9 @@ func (m AppModel) View() string {
 
 	paneH := m.height - 2 // top bar + status bar
 
-	// Each border adds 2 cols (left+right) and 2 rows (top+bottom)
-	// Split the inner widths so total including borders = m.width
-	listInner := (m.width*45/100) - 2
-	detailInner := m.width - (m.width*45/100) - 2
+	// Each box: border(2) + paddingLeft(1) = 3 overhead on content width
+	listInner := (m.width*45/100) - 3
+	detailInner := m.width - (m.width*45/100) - 3
 	innerH := paneH - 2
 
 	listBorderColor := ColorBorder
