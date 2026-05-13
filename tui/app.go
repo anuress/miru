@@ -242,12 +242,14 @@ func (m AppModel) View() string {
 	listBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(listBorderColor).
+		PaddingLeft(1).
 		Width(listInner).Height(innerH).
 		Render(listView)
 
 	detailBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(detailBorderColor).
+		PaddingLeft(1).
 		Width(detailInner).Height(innerH).
 		Render(detailView)
 
