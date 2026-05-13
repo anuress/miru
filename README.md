@@ -35,13 +35,28 @@ miru --port 6360                  # custom port (default: 6360)
 
 ## Keys
 
+### Request list (left pane)
+
 | Key | Action |
 |-----|--------|
 | `↑↓` | Navigate requests |
-| `←→` | Switch detail tabs |
-| `Tab` | Toggle list / detail focus |
+| `Tab` | Switch focus to detail pane |
 | `f` | Filter (URL · `m:POST` · `s:4xx`) |
-| `y` | Copy curl command |
-| `/` | Search response body |
+| `y` | Copy curl command for selected request |
 | `c` | Clear request list |
 | `q` | Quit |
+
+### Detail pane (right pane)
+
+| Key | Action |
+|-----|--------|
+| `↑↓` / `j` `k` | Move cursor line by line |
+| `Ctrl+U` / `Ctrl+D` | Move cursor half page up/down |
+| `gg` | Jump cursor to first line |
+| `G` | Jump cursor to last line |
+| `←→` | Switch tabs (resets cursor) |
+| `y` | Copy value under cursor (header value / JSON value / block) |
+| `Y` | Copy full raw line under cursor |
+| `/` | Search in response body |
+| `n` / `N` | Next / previous search match (also moves cursor) |
+| `Tab` | Switch focus back to list |

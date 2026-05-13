@@ -287,7 +287,7 @@ func (m AppModel) View() string {
 	}
 
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
-		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:curl │ f:filter │ c:clear  %s", reqCount, right),
+		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:copy │ f:filter │ c:clear  %s", reqCount, right),
 	)
 
 	return strings.Join([]string{topBar, split, statusBar}, "\n")
