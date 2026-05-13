@@ -108,10 +108,7 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 				m.scrollY--
 			}
 		case "down", "j":
-			lines := strings.Split(m.renderTab(), "\n")
-			availH := m.height - 1 // subtract tab bar
-			maxScroll := len(lines) - availH
-			if maxScroll > 0 && m.scrollY < maxScroll {
+			if ms := m.maxScroll(); m.scrollY < ms {
 				m.scrollY++
 			}
 		}
@@ -147,10 +144,15 @@ func (m DetailModel) View() string {
 	}
 	availH := m.height - overhead
 	if availH > 0 {
+		content = strings.TrimRight(content, "\n")
 		lines := strings.Split(content, "\n")
+		ms := len(lines) - availH
+		if ms < 0 {
+			ms = 0
+		}
 		start := m.scrollY
-		if start >= len(lines) {
-			start = max(0, len(lines)-1)
+		if start > ms {
+			start = ms
 		}
 		end := start + availH
 		if end > len(lines) {
@@ -164,6 +166,21 @@ func (m DetailModel) View() string {
 		return tabBar + "\n" + content + "\n" + StyleStatusBar.Render(searchBar)
 	}
 	return tabBar + "\n" + content
+}
+
+// maxScroll returns the maximum valid scrollY for the current tab content.
+func (m DetailModel) maxScroll() int {
+	if m.height <= 1 {
+		return 0
+	}
+	content := strings.TrimRight(m.renderTab(), "\n")
+	lines := strings.Split(content, "\n")
+	availH := m.height - 1 // subtract tab bar
+	ms := len(lines) - availH
+	if ms < 0 {
+		return 0
+	}
+	return ms
 }
 
 func (m DetailModel) respBody() string {
