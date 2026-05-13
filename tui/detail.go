@@ -23,7 +23,7 @@ const (
 	tabCount
 )
 
-var tabNames = []string{"REQUEST (FULL)", "REQ HEADERS", "RESP HEADERS", "RESP BODY"}
+var tabNames = []string{"RAW REQUEST", "REQ HEADERS", "RESP HEADERS", "RESP BODY"}
 
 type DetailModel struct {
 	request      *model.Request
