@@ -260,8 +260,8 @@ func (m AppModel) View() string {
 		listBorderColor = ColorBlue
 	}
 
-	listView := m.list.View()
-	detailView := m.detail.View()
+	listView := clipLines(m.list.View(), innerH)
+	detailView := clipLines(m.detail.View(), innerH)
 
 	listBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -291,5 +291,18 @@ func (m AppModel) View() string {
 	)
 
 	return strings.Join([]string{topBar, split, statusBar}, "\n")
+}
+
+// clipLines hard-limits s to at most n lines — safety net so pane content
+// can never overflow the allocated box height regardless of View() output.
+func clipLines(s string, n int) string {
+	if n <= 0 {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	if len(lines) <= n {
+		return s
+	}
+	return strings.Join(lines[:n], "\n")
 }
 
