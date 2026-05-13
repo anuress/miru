@@ -84,12 +84,10 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		listW := m.width * 45 / 100
-		paneH := m.height - 2
-		m.list.width = listW
-		m.list.height = paneH
-		m.detail.width = m.width - listW - 1
-		m.detail.height = paneH
+		m.list.width = (m.width*45/100) - 2
+		m.list.height = m.height - 4 // border top+bottom + topbar + statusbar
+		m.detail.width = m.width - (m.width*45/100) - 2
+		m.detail.height = m.height - 4
 		return m, nil
 
 	case msgReceived:
@@ -222,23 +220,38 @@ func (m AppModel) View() string {
 		fmt.Sprintf(" ◆ miru  %s │ %s  %sf:filter c:clear q:quit", m.process, m.device, filterStr),
 	)
 
-	listW := m.width * 45 / 100
-	detailW := m.width - listW - 1
 	paneH := m.height - 2 // top bar + status bar
+
+	// Each border adds 2 cols (left+right) and 2 rows (top+bottom)
+	// Split the inner widths so total including borders = m.width
+	listInner := (m.width*45/100) - 2
+	detailInner := m.width - (m.width*45/100) - 2
+	innerH := paneH - 2
+
+	listBorderColor := ColorBorder
+	detailBorderColor := ColorBorder
+	if m.focus == focusDetail {
+		detailBorderColor = ColorBlue
+	} else {
+		listBorderColor = ColorBlue
+	}
 
 	listView := m.list.View()
 	detailView := m.detail.View()
 
-	divider := lipgloss.NewStyle().
-		Foreground(ColorBorder).
-		Height(paneH).
-		Render("│")
+	listBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(listBorderColor).
+		Width(listInner).Height(innerH).
+		Render(listView)
 
-	split := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(listW).Height(paneH).MaxWidth(listW).Render(listView),
-		divider,
-		lipgloss.NewStyle().Width(detailW).Height(paneH).MaxWidth(detailW).Render(detailView),
-	)
+	detailBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(detailBorderColor).
+		Width(detailInner).Height(innerH).
+		Render(detailView)
+
+	split := lipgloss.JoinHorizontal(lipgloss.Top, listBox, detailBox)
 
 	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
