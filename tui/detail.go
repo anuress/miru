@@ -122,20 +122,25 @@ func (m DetailModel) View() string {
 		return lipgloss.NewStyle().Foreground(ColorGray).Render("\n  select a request to view details")
 	}
 
-	// Create tab styles inside View() so lipgloss detects the live terminal context
-	activeTab := lipgloss.NewStyle().
-		Background(lipgloss.Color("#1f6feb")).
-		Foreground(lipgloss.Color("#ffffff")).
-		Bold(true).
-		PaddingLeft(1).
-		PaddingRight(1)
-	inactiveTab := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#8b949e"))
+	// Rounded pill tabs using Powerline glyphs (requires Nerd Fonts)
+	const (
+		roundLeft  = "" //
+		roundRight = "" //
+	)
+	tabBg := lipgloss.Color("#1f6feb")
+	tabFg := lipgloss.Color("#ffffff")
+
+	capStyle     := lipgloss.NewStyle().Foreground(tabBg)
+	activeLabel  := lipgloss.NewStyle().Background(tabBg).Foreground(tabFg).Bold(true)
+	inactiveTab  := lipgloss.NewStyle().Foreground(lipgloss.Color("#8b949e"))
 
 	var tabs []string
 	for i, name := range tabNames {
 		if DetailTab(i) == m.activeTab {
-			tabs = append(tabs, activeTab.Render(name))
+			pill := capStyle.Render(roundLeft) +
+				activeLabel.Render(" "+name+" ") +
+				capStyle.Render(roundRight)
+			tabs = append(tabs, pill)
 		} else {
 			tabs = append(tabs, inactiveTab.Render(name))
 		}
