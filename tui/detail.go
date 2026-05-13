@@ -108,7 +108,12 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 				m.scrollY--
 			}
 		case "down", "j":
-			m.scrollY++
+			lines := strings.Split(m.renderTab(), "\n")
+			availH := m.height - 1 // subtract tab bar
+			maxScroll := len(lines) - availH
+			if maxScroll > 0 && m.scrollY < maxScroll {
+				m.scrollY++
+			}
 		}
 	}
 	return m, nil
