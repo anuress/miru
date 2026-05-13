@@ -101,7 +101,6 @@ func (m ListModel) View() string {
 	gray := lipgloss.NewStyle().Foreground(ColorGray)
 
 	header := gray.Render(fmt.Sprintf("%-8s %-*s %-6s %s", "METHOD", urlW, "URL", "STATUS", "TIME"))
-	separator := gray.Render(strings.Repeat("─", m.width))
 
 	visible := m.visible()
 	var allRows []string
@@ -128,10 +127,8 @@ func (m ListModel) View() string {
 
 	// Clip to available height (subtract 1 for header)
 	availH := m.height - 1
-	overhead := 2 // header + separator
-	availH -= overhead - 1
 	if availH <= 0 || len(allRows) <= availH {
-		return strings.Join(append([]string{header, separator}, allRows...), "\n")
+		return strings.Join(append([]string{header}, allRows...), "\n")
 	}
 	offset := m.cursor - availH + 1
 	if offset < 0 {
@@ -141,7 +138,7 @@ func (m ListModel) View() string {
 	if end > len(allRows) {
 		end = len(allRows)
 	}
-	return strings.Join(append([]string{header, separator}, allRows[offset:end]...), "\n")
+	return strings.Join(append([]string{header}, allRows[offset:end]...), "\n")
 }
 
 func statusText(code int, inFlight bool) string {
