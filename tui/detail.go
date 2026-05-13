@@ -110,9 +110,7 @@ func (m DetailModel) Update(msg tea.Msg) (DetailModel, tea.Cmd) {
 				m.lastKey = ""
 			}
 		case "/":
-			if m.activeTab == TabRespBody {
-				m.searching = true
-			}
+			m.searching = true
 		case "up", "k":
 			if m.cursorLine > 0 {
 				m.cursorLine--
@@ -262,7 +260,7 @@ func (m DetailModel) respBody() string {
 }
 
 func (m DetailModel) matchInfo() string {
-	matches := m.search.FindMatches(m.respBody())
+	matches := m.search.FindMatches(strings.Join(m.contentLines(), "\n"))
 	if len(matches) == 0 {
 		return "no matches"
 	}
@@ -271,21 +269,23 @@ func (m DetailModel) matchInfo() string {
 
 func (m DetailModel) renderTab() string {
 	r := m.request
+	var content string
 	switch m.activeTab {
 	case TabRequestFull:
-		return renderHeaders(r.ReqHeaders) + "\n" + renderBody(r.ReqBody, r.ReqBodyType)
+		content = renderHeaders(r.ReqHeaders) + "\n" + renderBody(r.ReqBody, r.ReqBodyType)
 	case TabReqHeaders:
-		return renderHeaders(r.ReqHeaders)
+		content = renderHeaders(r.ReqHeaders)
 	case TabRespHeaders:
-		return renderHeaders(r.RespHeaders)
+		content = renderHeaders(r.RespHeaders)
 	case TabRespBody:
-		body := renderBody(r.RespBody, r.RespBodyType)
-		if m.search.Query != "" {
-			body = highlightMatches(body, m.search, m.currentMatch)
-		}
-		return body
+		content = renderBody(r.RespBody, r.RespBodyType)
+	default:
+		return ""
 	}
-	return ""
+	if m.search.Query != "" {
+		content = highlightMatches(content, m.search, m.currentMatch)
+	}
+	return content
 }
 
 func renderHeaders(headers map[string]string) string {
