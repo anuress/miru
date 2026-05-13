@@ -17,6 +17,7 @@ type Theme struct {
 	Accent    lipgloss.Color // active tabs, active border, search bar bg
 	AccentFg  lipgloss.Color // text on accent background
 	HeaderKey lipgloss.Color // header key labels in detail pane
+	Surface   lipgloss.Color // badge/chip backgrounds in top bar
 }
 
 // ActiveTheme is the currently applied theme. Set via ApplyTheme before the TUI starts.
@@ -38,6 +39,7 @@ var CatppuccinMocha = Theme{
 	Accent:    "#89b4fa", // Blue
 	AccentFg:  "#1e1e2e", // Base (dark text on blue)
 	HeaderKey: "#74c7ec", // Sapphire
+	Surface:   "#313244", // Surface0
 }
 
 // GithubDark — GitHub's dark mode color scheme.
@@ -55,6 +57,7 @@ var GithubDark = Theme{
 	Accent:    "#1f6feb",
 	AccentFg:  "#ffffff",
 	HeaderKey: "#79c0ff",
+	Surface:   "#21262d",
 }
 
 // ThemeByName returns the theme for the given name, or false if unknown.

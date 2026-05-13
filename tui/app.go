@@ -246,10 +246,23 @@ func (m AppModel) View() string {
 		filterStr = fmt.Sprintf("  [Filter: %s_]", m.filterInput)
 	}
 
-	reqCount := fmt.Sprintf("%d reqs", len(m.list.requests))
+	pill := lipgloss.NewStyle().
+		Background(ActiveTheme.Surface).
+		Foreground(ColorWhite).
+		PaddingLeft(1).PaddingRight(1)
+
+	brand := lipgloss.NewStyle().Foreground(ActiveTheme.Accent).Bold(true).Render("◆ miru")
+	processPill := pill.Render(m.process)
+	devicePill := pill.Render(m.device)
+	countPill := pill.Render(fmt.Sprintf("%d reqs", len(m.list.requests)))
+	quitHint := lipgloss.NewStyle().Foreground(ColorGray).Render("q:quit")
+
+	topContent := fmt.Sprintf(" %s  %s  %s  %s%s  %s",
+		brand, processPill, devicePill, countPill, filterStr, quitHint)
+
+	// connection status on the right
 	topBar := lipgloss.NewStyle().Background(ColorBgAlt).Width(m.width).Render(
-		fmt.Sprintf(" ◆ miru  %s │ %s  %s%s  %s  q:quit",
-			m.process, m.device, reqCount, filterStr, connStatus),
+		topContent + "  " + connStatus,
 	)
 
 	paneH := m.height - 2 // top bar + status bar
