@@ -19,6 +19,9 @@ func GenerateCurl(r model.Request) string {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
+		if strings.EqualFold(k, "content-length") {
+			continue
+		}
 		fmt.Fprintf(&sb, " \\\n  -H '%s: %s'", k, r.ReqHeaders[k])
 	}
 
