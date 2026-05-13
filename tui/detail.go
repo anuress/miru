@@ -36,6 +36,7 @@ type DetailModel struct {
 	height       int
 	cursorLine   int
 	lastKey      string
+	focused      bool
 }
 
 func NewDetailModel() DetailModel {
@@ -184,10 +185,10 @@ func (m DetailModel) View() string {
 		content = boundWidth(content, m.width-1)
 	}
 
-	// Clip to pane height with cursor-driven scroll offset
-	overhead := 1
+	// Clip to pane height: tabBar(1) + blank(1) + optional searchBar(1) = 2-3 overhead
+	overhead := 2
 	if m.searching || m.search.Query != "" {
-		overhead = 2
+		overhead = 3
 	}
 	availH := m.height - overhead
 	if availH > 0 {
@@ -205,22 +206,24 @@ func (m DetailModel) View() string {
 			end = len(lines)
 		}
 
-		// Highlight cursor line with reverse-video — no extra chars, no width change
 		visible := make([]string, end-start)
 		copy(visible, lines[start:end])
-		cursorInView := m.cursorLine - start
-		if cursorInView >= 0 && cursorInView < len(visible) {
-			plain := stripANSI(visible[cursorInView])
-			visible[cursorInView] = "\033[7m" + plain + "\033[0m"
+		// Only highlight cursor when pane is focused
+		if m.focused {
+			cursorInView := m.cursorLine - start
+			if cursorInView >= 0 && cursorInView < len(visible) {
+				plain := stripANSI(visible[cursorInView])
+				visible[cursorInView] = "\033[7m" + plain + "\033[0m"
+			}
 		}
 		content = strings.Join(visible, "\n")
 	}
 
 	if m.searching || m.search.Query != "" {
 		searchBar := fmt.Sprintf("/ %s_   %s   n/N: next/prev · esc: dismiss", m.searchInput, m.matchInfo())
-		return tabBar + "\n" + content + "\n" + StyleStatusBar.Render(searchBar)
+		return tabBar + "\n\n" + content + "\n" + StyleStatusBar.Render(searchBar)
 	}
-	return tabBar + "\n" + content
+	return tabBar + "\n\n" + content
 }
 
 // contentLines returns the rendered, width-bounded, trimmed lines for the current tab.

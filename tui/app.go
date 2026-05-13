@@ -260,6 +260,7 @@ func (m AppModel) View() string {
 		listBorderColor = ColorBlue
 	}
 
+	m.detail.focused = (m.focus == focusDetail)
 	listView := clipLines(m.list.View(), innerH)
 	detailView := clipLines(m.detail.View(), innerH)
 
