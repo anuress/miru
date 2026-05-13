@@ -252,10 +252,8 @@ func (m AppModel) View() string {
 	processPill := pillBase.Background(ActiveTheme.Blue).Render(m.process)
 	devicePill := pillBase.Background(ActiveTheme.Green).Render(m.device)
 	countPill := pillBase.Background(ActiveTheme.Purple).Render(fmt.Sprintf("%d reqs", len(m.list.requests)))
-	quitHint := lipgloss.NewStyle().Foreground(ColorGray).Render("q:quit")
-
-	topContent := fmt.Sprintf(" %s  %s  %s  %s%s  %s",
-		brand, processPill, devicePill, countPill, filterStr, quitHint)
+	topContent := fmt.Sprintf(" %s  %s  %s  %s%s",
+		brand, processPill, devicePill, countPill, filterStr)
 
 	// connection status on the right
 	topBar := lipgloss.NewStyle().Background(ColorBgAlt).Width(m.width).Render(
@@ -309,9 +307,9 @@ func (m AppModel) View() string {
 	case m.focus == focusDetail && m.detail.searching:
 		hints = "type to search · ↑↓:matches · esc:clear"
 	case m.focus == focusDetail:
-		hints = "←→:tabs · ↑↓:cursor · y:copy val · Y:copy line · /:search · Tab:list"
+		hints = "←→:tabs · ↑↓:cursor · y:copy val · Y:copy line · /:search · Tab:list · q:quit"
 	default:
-		hints = "↑↓:navigate · y:curl · f:filter · c:clear · Tab:detail"
+		hints = "↑↓:navigate · y:curl · f:filter · c:clear · Tab:detail · q:quit"
 	}
 
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
