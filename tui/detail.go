@@ -168,14 +168,25 @@ func (m DetailModel) View() string {
 	return tabBar + "\n" + content
 }
 
-// maxScroll returns the maximum valid scrollY for the current tab content.
+// maxScroll returns the maximum valid scrollY by mirroring the View() pipeline exactly.
 func (m DetailModel) maxScroll() int {
-	if m.height <= 1 {
+	if m.height <= 1 || m.request == nil {
 		return 0
 	}
-	content := strings.TrimRight(m.renderTab(), "\n")
+	content := m.renderTab()
+	if m.width > 2 {
+		content = boundWidth(content, m.width-1)
+	}
+	overhead := 1
+	if m.searching || m.search.Query != "" {
+		overhead = 2
+	}
+	availH := m.height - overhead
+	if availH <= 0 {
+		return 0
+	}
+	content = strings.TrimRight(content, "\n")
 	lines := strings.Split(content, "\n")
-	availH := m.height - 1 // subtract tab bar
 	ms := len(lines) - availH
 	if ms < 0 {
 		return 0
