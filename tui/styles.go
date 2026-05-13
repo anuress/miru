@@ -56,3 +56,23 @@ func StatusStyle(code int, inFlight bool) lipgloss.Style {
 		return s.Foreground(ColorGray)
 	}
 }
+
+func MethodStyle(method string) lipgloss.Style {
+	s := lipgloss.NewStyle().Bold(true)
+	switch method {
+	case "GET":
+		return s.Foreground(lipgloss.Color("#58a6ff")) // blue
+	case "POST":
+		return s.Foreground(lipgloss.Color("#3fb950")) // green
+	case "PUT":
+		return s.Foreground(lipgloss.Color("#d2a8ff")) // purple
+	case "PATCH":
+		return s.Foreground(lipgloss.Color("#ffa657")) // orange
+	case "DELETE":
+		return s.Foreground(lipgloss.Color("#f78166")) // red
+	case "HEAD":
+		return s.Foreground(lipgloss.Color("#8b949e")) // gray
+	default:
+		return s.Foreground(lipgloss.Color("#e6edf3")) // white
+	}
+}

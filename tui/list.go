@@ -110,7 +110,6 @@ func (m ListModel) View() string {
 	for i, r := range visible {
 		url := truncate(r.URL, urlW)
 		if i == m.cursor {
-			// Plain text for selected row so the background isn't broken by inner reset codes
 			plain := fmt.Sprintf("%-8s %-*s %-6s %s",
 				r.Method, urlW, url,
 				statusText(r.StatusCode, r.InFlight),
@@ -118,7 +117,7 @@ func (m ListModel) View() string {
 			)
 			allRows = append(allRows, selStyle.Width(m.width).Render(plain))
 		} else {
-			method := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-8s", r.Method))
+			method := MethodStyle(r.Method).Render(fmt.Sprintf("%-8s", r.Method))
 			status := StatusStyle(r.StatusCode, r.InFlight).Render(fmt.Sprintf("%-6d", r.StatusCode))
 			duration := gray.Render(fmt.Sprintf("%dms", r.Duration.Milliseconds()))
 			allRows = append(allRows, fmt.Sprintf("%s %-*s %s %s", method, urlW, url, status, duration))
