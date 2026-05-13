@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"golang.design/x/clipboard"
 
 	"github.com/anuress/miru/adb"
 	"github.com/anuress/miru/model"
@@ -24,13 +25,15 @@ type msgReceived struct{ msg protocol.Message }
 type connLost struct{}
 type connRestored struct{ session *adb.LogcatSession }
 
+type clearCurlMsg struct{}
+
 type AppModel struct {
 	list         ListModel
 	detail       DetailModel
-	curl         CurlOverlay
 	filter       Filter
 	filterMode   bool
 	filterInput  string
+	curlFlash    string // brief status after copying curl
 	focus        focusPane
 	session      *adb.LogcatSession
 	msgCh        <-chan protocol.Message
@@ -45,9 +48,9 @@ type AppModel struct {
 
 func NewAppModel(session *adb.LogcatSession, device, process, pid string) AppModel {
 	return AppModel{
-		list:      NewListModel(),
-		detail:    NewDetailModel(),
-		session:   session,
+		list:    NewListModel(),
+		detail:  NewDetailModel(),
+		session: session,
 		msgCh:     protocol.NewStreamReader(session),
 		device:    device,
 		process:   process,
@@ -109,11 +112,11 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.connected = true
 		return m, m.listenCmd()
 
+	case clearCurlMsg:
+		m.curlFlash = ""
+		return m, nil
+
 	case tea.KeyMsg:
-		if m.curl.visible {
-			m.curl, _ = m.curl.Update(msg)
-			return m, nil
-		}
 		if m.filterMode {
 			switch msg.String() {
 			case "esc":
@@ -155,7 +158,11 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.detail.SetRequest(nil)
 		case "y":
 			if sel := m.list.Selected(); sel != nil {
-				m.curl.Show(*sel)
+				clipboard.Write(clipboard.FmtText, []byte(GenerateCurl(*sel)))
+				m.curlFlash = "✓ curl copied"
+				return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+					return clearCurlMsg{}
+				})
 			}
 		default:
 			if m.focus == focusList {
@@ -255,41 +262,16 @@ func (m AppModel) View() string {
 	split := lipgloss.JoinHorizontal(lipgloss.Top, listBox, detailBox)
 
 	reqCount := fmt.Sprintf("%d requests", len(m.list.requests))
+
+	right := connStatus
+	if m.curlFlash != "" {
+		right = lipgloss.NewStyle().Foreground(ColorGreen).Render(m.curlFlash)
+	}
+
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
-		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:curl │ f:filter │ c:clear  %s", reqCount, connStatus),
+		fmt.Sprintf(" %s │ Tab:panes │ ←→:tabs │ y:curl │ f:filter │ c:clear  %s", reqCount, right),
 	)
 
-	view := strings.Join([]string{topBar, split, statusBar}, "\n")
-
-	if m.curl.visible {
-		overlay := m.curl.View()
-		overlayW := lipgloss.Width(overlay)
-		overlayH := lipgloss.Height(overlay)
-		top := (m.height - overlayH) / 2
-		left := (m.width - overlayW) / 2
-		return placePseudoOverlay(view, overlay, top, left)
-	}
-	return view
+	return strings.Join([]string{topBar, split, statusBar}, "\n")
 }
 
-func placePseudoOverlay(base, overlay string, top, left int) string {
-	baseLines := strings.Split(base, "\n")
-	overlayLines := strings.Split(overlay, "\n")
-	for i, ol := range overlayLines {
-		row := top + i
-		if row < 0 || row >= len(baseLines) {
-			continue
-		}
-		line := baseLines[row]
-		runes := []rune(line)
-		olRunes := []rune(ol)
-		for j, r := range olRunes {
-			col := left + j
-			if col >= 0 && col < len(runes) {
-				runes[col] = r
-			}
-		}
-		baseLines[row] = string(runes)
-	}
-	return strings.Join(baseLines, "\n")
-}
