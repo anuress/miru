@@ -1,6 +1,6 @@
 # miru 見る
 
-Live OkHttp network traffic in your terminal.
+Live OkHttp network traffic in your terminal. Replaces the Android Studio OkHttp Profiler plugin for IDE-free debugging.
 
 ## Install
 
@@ -10,13 +10,13 @@ go install github.com/anuress/miru@latest
 
 ## Android setup
 
-Add to your app's `build.gradle`:
+Add the interceptor to your app's `build.gradle`:
 
 ```groovy
-debugImplementation 'com.itkacher.okhttpprofiler:okhttpprofiler:1.0.8'
+debugImplementation 'io.nerdythings:okhttpprofiler:1.0.8'
 ```
 
-Add the interceptor:
+Register it on your `OkHttpClient`:
 
 ```kotlin
 OkHttpClient.Builder()
@@ -30,8 +30,20 @@ OkHttpClient.Builder()
 miru                              # pick device + process interactively
 miru --device emulator-5554       # skip device picker
 miru --process com.myapp.debug    # skip process picker
-miru --port 6360                  # custom port (default: 6360)
+miru --theme github-dark          # use GitHub Dark theme (default: catppuccin-mocha)
 ```
+
+## Configuration
+
+Create `~/.config/miru/config.json` to persist preferences:
+
+```json
+{
+  "theme": "catppuccin-mocha"
+}
+```
+
+Available themes: `catppuccin-mocha` (default), `github-dark`
 
 ## Keys
 
@@ -39,11 +51,11 @@ miru --port 6360                  # custom port (default: 6360)
 
 | Key | Action |
 |-----|--------|
-| `↑↓` | Navigate requests |
-| `Tab` | Switch focus to detail pane |
-| `f` | Filter (URL · `m:POST` · `s:4xx`) |
+| `↑↓` | Navigate requests (newest at top) |
+| `f` | Filter by URL · `m:POST` · `s:4xx` |
 | `y` | Copy curl command for selected request |
 | `c` | Clear request list |
+| `Tab` | Switch focus to detail pane |
 | `q` | Quit |
 
 ### Detail pane (right pane)
@@ -51,12 +63,23 @@ miru --port 6360                  # custom port (default: 6360)
 | Key | Action |
 |-----|--------|
 | `↑↓` / `j` `k` | Move cursor line by line |
-| `Ctrl+U` / `Ctrl+D` | Move cursor half page up/down |
-| `gg` | Jump cursor to first line |
-| `G` | Jump cursor to last line |
-| `←→` | Switch tabs (resets cursor) |
-| `y` | Copy value under cursor (header value / JSON value / block) |
-| `Y` | Copy full raw line under cursor |
-| `/` | Search in response body |
-| `n` / `N` | Next / previous search match (also moves cursor) |
+| `Ctrl+U` / `Ctrl+D` | Jump half page up/down |
+| `gg` / `G` | Jump to first / last line |
+| `←→` | Switch tabs |
+| `y` | Copy value at cursor (header value · JSON value · block) |
+| `Y` | Copy full raw line at cursor |
+| `/` | Search — type query, `↑↓` navigate matches, `esc` clear |
 | `Tab` | Switch focus back to list |
+
+### Tabs
+
+| Tab | Content |
+|-----|---------|
+| RAW REQUEST | Request headers + body |
+| REQ HEADERS | Request headers only |
+| RESP HEADERS | Response headers only |
+| RESP BODY | Response body (pretty-printed JSON) |
+
+## How it works
+
+miru reads from `adb logcat`, filtering for `OKPRFL_*` log lines emitted by the OkHttpProfilerInterceptor. It assembles request/response pairs by their unique ID and streams them into the TUI in real time — no TCP sockets, no port forwarding.
