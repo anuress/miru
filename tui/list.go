@@ -116,8 +116,8 @@ func (m ListModel) View() string {
 				statusText(r.StatusCode, r.InFlight),
 				fmt.Sprintf("%dms", r.Duration.Milliseconds()),
 			)
-			// Pad to full width manually — avoids lipgloss Width() wrapping at the boundary
-			if pad := m.width - len(plain); pad > 0 {
+			// Use display width (not byte length) for correct padding with Unicode chars
+			if pad := m.width - visibleLen(plain); pad > 0 {
 				plain += strings.Repeat(" ", pad)
 			}
 			allRows = append(allRows, selStyle.Render(plain))

@@ -87,8 +87,10 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.list.width = (m.width*45/100) - 4  // border(2) + padding(1) + safety(1)
-		m.list.height = m.height - 4
+		// Model widths: border(2) + paddingLeft(1) + safety(1) = 4 overhead
+		// lipgloss Width() in View uses -3 (safety excluded — lipgloss handles it)
+		m.list.width = (m.width*45/100) - 4
+		m.list.height = m.height - 4 // topBar(1) + statusBar(1) + borders(2)
 		m.detail.width = m.width - (m.width*45/100) - 4
 		m.detail.height = m.height - 4
 		return m, nil
@@ -207,19 +209,18 @@ func (m *AppModel) applyMessage(msg protocol.Message) {
 		return
 	}
 	r := model.Request{
-		ID:          msg.ID,
-		Method:      msg.Method,
-		URL:         msg.URL,
-		StatusCode:  msg.Status,
-		Duration:    time.Duration(msg.Duration) * time.Millisecond,
-		ReqHeaders:  msg.ReqHeaders,
-		ReqBody:     msg.ReqBody,
-		RespHeaders: msg.RespHeaders,
-		RespBody:    msg.RespBody,
-		InFlight:    false,
-	}
-	if msg.Error != "" {
-		r.Error = msg.Error
+		ID:           msg.ID,
+		Method:       msg.Method,
+		URL:          msg.URL,
+		StatusCode:   msg.Status,
+		Duration:     time.Duration(msg.Duration) * time.Millisecond,
+		ReqHeaders:   msg.ReqHeaders,
+		ReqBody:      msg.ReqBody,
+		RespHeaders:  msg.RespHeaders,
+		RespBody:     msg.RespBody,
+		RespBodyType: msg.RespHeaders["Content-Type"],
+		InFlight:     false,
+		Error:        msg.Error,
 	}
 	m.list.AddRequest(r)
 	if sel := m.list.Selected(); sel != nil {

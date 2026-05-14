@@ -8,10 +8,15 @@ import (
 	"github.com/anuress/miru/model"
 )
 
+// shellEscape wraps s in single quotes, escaping any embedded single quotes.
+func shellEscape(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
+}
+
 func GenerateCurl(r model.Request) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "curl -X %s \\\n", r.Method)
-	fmt.Fprintf(&sb, "  '%s'", r.URL)
+	fmt.Fprintf(&sb, "  %s", shellEscape(r.URL))
 
 	keys := make([]string, 0, len(r.ReqHeaders))
 	for k := range r.ReqHeaders {
@@ -31,11 +36,11 @@ func GenerateCurl(r model.Request) string {
 		if skipHeaders[strings.ToLower(k)] {
 			continue
 		}
-		fmt.Fprintf(&sb, " \\\n  -H '%s: %s'", k, r.ReqHeaders[k])
+		fmt.Fprintf(&sb, " \\\n  -H %s", shellEscape(k+": "+r.ReqHeaders[k]))
 	}
 
 	if r.ReqBody != "" {
-		fmt.Fprintf(&sb, " \\\n  -d '%s'", r.ReqBody)
+		fmt.Fprintf(&sb, " \\\n  -d %s", shellEscape(r.ReqBody))
 	}
 	return sb.String()
 }

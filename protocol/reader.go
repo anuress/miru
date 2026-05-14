@@ -30,7 +30,7 @@ func NewStreamReader(r io.Reader) <-chan Message {
 		defer close(ch)
 		partial := make(map[string]*Message)
 		scanner := bufio.NewScanner(r)
-		scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+		scanner.Buffer(make([]byte, 4*1024*1024), 4*1024*1024) // 4MB — handles large response bodies
 		for scanner.Scan() {
 			tag, value := ExtractOKPRFL(scanner.Text())
 			if tag == "" {

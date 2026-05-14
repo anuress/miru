@@ -196,6 +196,9 @@ func (m DetailModel) View() string {
 			scrollOffset = m.cursorLine - availH + 1
 		}
 		start := scrollOffset
+		if start >= len(lines) {
+			start = max(0, len(lines)-1)
+		}
 		end := start + availH
 		if end > len(lines) {
 			end = len(lines)
@@ -275,7 +278,7 @@ func (m DetailModel) renderTab() string {
 	var content string
 	switch m.activeTab {
 	case TabRequestFull:
-		content = renderHeaders(r.ReqHeaders) + "\n" + renderBody(r.ReqBody, r.ReqBodyType)
+		content = renderHeaders(r.ReqHeaders) + "\n" + renderBody(r.ReqBody, r.ReqHeaders["Content-Type"])
 	case TabReqHeaders:
 		content = renderHeaders(r.ReqHeaders)
 	case TabRespHeaders:
@@ -438,7 +441,10 @@ func visibleLen(s string) int {
 
 // truncateLine truncates s to maxW visible chars, appending "…".
 func truncateLine(s string, maxW int) string {
-	if maxW <= 1 {
+	if maxW <= 0 {
+		return ""
+	}
+	if maxW == 1 {
 		return "…"
 	}
 	inEsc := false

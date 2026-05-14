@@ -42,6 +42,7 @@ func extractValue(line string) string {
 }
 
 // blockCopy collects lines from startIdx through the matching closing brace/bracket.
+// Tracks both {} and [] depths independently to handle mixed nesting correctly.
 // Falls back to all lines from startIdx if no matching close is found.
 func blockCopy(lines []string, startIdx int) string {
 	if startIdx >= len(lines) {
@@ -49,29 +50,32 @@ func blockCopy(lines []string, startIdx int) string {
 	}
 
 	startLine := lines[startIdx]
-	openIdx := strings.LastIndexAny(startLine, "{[")
-	if openIdx == -1 {
+	if strings.LastIndexAny(startLine, "{[") == -1 {
 		return strings.TrimSpace(startLine)
 	}
 
-	var open, close rune
-	if startLine[openIdx] == '{' {
-		open, close = '{', '}'
-	} else {
-		open, close = '[', ']'
-	}
+	// Track both brace and bracket depth independently
+	braceDepth := 0
+	bracketDepth := 0
+	started := false
 
-	depth := 0
 	for i := startIdx; i < len(lines); i++ {
 		for _, ch := range lines[i] {
-			if ch == open {
-				depth++
-			} else if ch == close {
-				depth--
-				if depth == 0 {
-					return strings.Join(lines[startIdx:i+1], "\n")
-				}
+			switch ch {
+			case '{':
+				braceDepth++
+				started = true
+			case '}':
+				braceDepth--
+			case '[':
+				bracketDepth++
+				started = true
+			case ']':
+				bracketDepth--
 			}
+		}
+		if started && braceDepth == 0 && bracketDepth == 0 {
+			return strings.Join(lines[startIdx:i+1], "\n")
 		}
 	}
 	return strings.Join(lines[startIdx:], "\n")

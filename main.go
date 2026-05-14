@@ -19,7 +19,10 @@ type miruConfig struct {
 }
 
 func loadConfig() miruConfig {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return miruConfig{Theme: "catppuccin-mocha"}
+	}
 	path := filepath.Join(home, ".config", "miru", "config.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
