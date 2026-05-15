@@ -24,8 +24,11 @@ Thumbs.db
 .vscode/
 *.iml
 
-# AI / planning docs
+# AI / planning docs and tool configs
 docs/
 .superpowers/
 CLAUDE.md
 .claude/
+.serena/
+.cursor/
+.aider*
