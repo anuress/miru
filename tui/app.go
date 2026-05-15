@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"golang.design/x/clipboard"
+	"github.com/anuress/miru/clipboard"
 
 	"github.com/anuress/miru/adb"
 	"github.com/anuress/miru/model"
@@ -166,14 +166,14 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "y":
 			if m.focus == focusDetail {
 				if val, ok := m.detail.ValueAtCursor(); ok {
-					clipboard.Write(clipboard.FmtText, []byte(val))
+					clipboard.Write(val) //nolint
 					m.curlFlash = "✓ copied"
 					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
 						return clearCurlMsg{}
 					})
 				}
 			} else if sel := m.list.Selected(); sel != nil {
-				clipboard.Write(clipboard.FmtText, []byte(GenerateCurl(*sel)))
+				clipboard.Write(GenerateCurl(*sel)) //nolint
 				m.curlFlash = "✓ curl copied"
 				return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
 					return clearCurlMsg{}
@@ -182,7 +182,7 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "Y":
 			if m.focus == focusDetail {
 				if line, ok := m.detail.LineAtCursor(); ok {
-					clipboard.Write(clipboard.FmtText, []byte(line))
+					clipboard.Write(line) //nolint
 					m.curlFlash = "✓ copied"
 					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
 						return clearCurlMsg{}
