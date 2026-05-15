@@ -1,6 +1,6 @@
 # miru 見る
 
-Live OkHttp network traffic in your terminal. Replaces the Android Studio OkHttp Profiler plugin for IDE-free debugging.
+Live OkHttp network traffic in your terminal. An alternative to the Android Studio OkHttp Profiler plugin — useful when you want to monitor network calls without opening the IDE.
 
 ## Install
 
@@ -80,6 +80,6 @@ Available themes: `catppuccin-mocha` (default), `github-dark`
 | RESP HEADERS | Response headers only |
 | RESP BODY | Response body (pretty-printed JSON) |
 
-## How it works
+## Credits
 
-miru reads from `adb logcat`, filtering for `OKPRFL_*` log lines emitted by the OkHttpProfilerInterceptor. It assembles request/response pairs by their unique ID and streams them into the TUI in real time — no TCP sockets, no port forwarding.
+miru is built on top of the [OkHttp Profiler](https://github.com/itkacher/OkHttpProfiler) library by [nerdythings](https://github.com/itkacher). The interceptor handles data capture on the Android side — miru provides the terminal UI to view that data without requiring Android Studio.
