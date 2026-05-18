@@ -27,10 +27,11 @@ func (m *ListModel) AddRequest(r model.Request) {
 	m.requests = append([]model.Request{r}, m.requests...)
 	if m.autoScroll {
 		m.cursor = 0
-	} else {
-		// shift cursor down to keep the same item selected
+	} else if m.filter.Match(r) {
+		// new item prepended to visible list — shift cursor to keep same item selected
 		m.cursor++
 	}
+	// non-matching item: visible list unchanged, cursor stays
 }
 
 func (m *ListModel) UpdateRequest(r model.Request) {
