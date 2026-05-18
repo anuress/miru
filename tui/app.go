@@ -137,6 +137,11 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.filter = NewFilter(m.filterInput)
 					m.list.SetFilter(m.filter)
 				}
+			case "up", "down":
+				m.list, _ = m.list.Update(msg)
+				if sel := m.list.Selected(); sel != nil {
+					m.detail.SetRequest(sel)
+				}
 			default:
 				if len(msg.String()) == 1 {
 					m.filterInput += msg.String()
@@ -304,7 +309,7 @@ func (m AppModel) View() string {
 	var hints string
 	switch {
 	case m.filterMode:
-		hints = "URL · m:POST · s:4xx   esc:clear filter"
+		hints = "URL · m:POST · s:4xx   ↑↓:navigate · esc:clear filter"
 	case m.focus == focusDetail && m.detail.searching:
 		hints = "type to search · ↑↓:matches · esc:clear"
 	case m.focus == focusDetail:
