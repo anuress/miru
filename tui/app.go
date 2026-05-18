@@ -142,6 +142,13 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if sel := m.list.Selected(); sel != nil {
 					m.detail.SetRequest(sel)
 				}
+			case "tab":
+				m.filterMode = false
+				if m.focus == focusList {
+					m.focus = focusDetail
+				} else {
+					m.focus = focusList
+				}
 			default:
 				if len(msg.String()) == 1 {
 					m.filterInput += msg.String()

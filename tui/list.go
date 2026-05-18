@@ -49,6 +49,7 @@ func (m *ListModel) Clear() {
 
 func (m *ListModel) SetFilter(f Filter) {
 	m.filter = f
+	m.cursor = 0
 }
 
 func (m ListModel) Selected() *model.Request {
