@@ -54,6 +54,8 @@ Available themes: `catppuccin-mocha` (default), `github-dark`
 | `↑↓` | Navigate requests (newest at top) |
 | `f` | Filter by URL · `m:POST` · `s:4xx` |
 | `y` | Copy curl command for selected request |
+| `r` | Copy response body (pretty-printed) |
+| `R` | Copy raw request (headers + body) |
 | `c` | Clear request list |
 | `Tab` | Switch focus to detail pane |
 | `q` | Quit |
