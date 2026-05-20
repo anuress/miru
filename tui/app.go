@@ -201,6 +201,36 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					})
 				}
 			}
+		case "r":
+			if m.focus == focusList {
+				if sel := m.list.Selected(); sel != nil {
+					body := RespBodyCopy(*sel)
+					if body == "" {
+						m.curlFlash = "no response body"
+					} else {
+						clipboard.Write(body) //nolint
+						m.curlFlash = "✓ body copied"
+					}
+					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+						return clearCurlMsg{}
+					})
+				}
+			}
+		case "R":
+			if m.focus == focusList {
+				if sel := m.list.Selected(); sel != nil {
+					raw := RawRequestCopy(*sel)
+					if raw == "" {
+						m.curlFlash = "no request data"
+					} else {
+						clipboard.Write(raw) //nolint
+						m.curlFlash = "✓ request copied"
+					}
+					return m, tea.Tick(2*time.Second, func(_ time.Time) tea.Msg {
+						return clearCurlMsg{}
+					})
+				}
+			}
 		default:
 			if m.focus == focusList {
 				m.list, _ = m.list.Update(msg)
@@ -322,7 +352,7 @@ func (m AppModel) View() string {
 	case m.focus == focusDetail:
 		hints = "←→:tabs · ↑↓:cursor · y:copy val · Y:copy line · /:search · Tab:list · q:quit"
 	default:
-		hints = "↑↓:navigate · y:curl · f:filter · c:clear · Tab:detail · q:quit"
+		hints = "↑↓:navigate · y:curl · r:resp · R:req · f:filter · c:clear · Tab:detail · q:quit"
 	}
 
 	statusBar := lipgloss.NewStyle().Background(ColorBgAlt).Foreground(ColorGray).Width(m.width).Render(
